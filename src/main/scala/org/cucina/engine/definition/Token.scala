@@ -1,12 +1,13 @@
 package org.cucina.engine.definition
 
-import scala.collection.Set
+import scala.collection.mutable.Set
 
 /**
  * @author levinev
  */
 class Token(domainObject:Object, processDefinition:ProcessDefinition) {
-  var stateId:String
-  val children:Set[Token]
+  var stateId:String = _
+  var children:Set[Token] = Set()
+  
   def hasChildren():Boolean = children.nonEmpty
 }  

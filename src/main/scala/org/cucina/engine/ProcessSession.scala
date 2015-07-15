@@ -108,7 +108,7 @@ null
       LOG.debug("token = " + token)
     }
 
-    val currentPlace: State = processDefinition.findState(token.stateId)
+    val currentstate: State = processDefinition.findState(token.stateId)
 
     try {
       if (LOG.isDebugEnabled()) {
@@ -116,7 +116,7 @@ null
           transition.id + " transition.output.id=" + transition.output.id)
       }
 
-      currentPlace.leave(transition, processContext)
+      currentstate.leave(transition, processContext)
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("After leaving place id=" + token.stateId)
@@ -126,7 +126,7 @@ null
       case e: Exception =>
         var id = "unknown"
 
-        if (currentPlace != null) {
+        if (currentstate != null) {
           id = token.stateId
         }
 

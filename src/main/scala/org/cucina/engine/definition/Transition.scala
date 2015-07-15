@@ -6,12 +6,8 @@ import org.slf4j.LoggerFactory
 /**
  * @author levinev
  */
-class Transition {
+class Transition(val id: String, val output: State, val input: State, checks: Iterable[Check]) {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
-  val id: String
-  val output: State
-  val input: State
-  val checks: Array[Check]
   def isEnabled(processContext: ProcessContext) = {
     input.canLeave(processContext) && (findFirstFailingCondition(processContext) == null)
   }

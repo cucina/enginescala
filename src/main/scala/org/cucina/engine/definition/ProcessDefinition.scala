@@ -14,11 +14,8 @@ import scala.collection.mutable.Map
  * @see State
  * @see Transition
  */
-class ProcessDefinition {
+class ProcessDefinition(startState:State, description:String, id:String) {
   private[this] val states: Map[String, State] = new HashMap[String, State]
-  var startState: State
-  var description: String
-  var id: String
 
   /**
    * JAVADOC.
