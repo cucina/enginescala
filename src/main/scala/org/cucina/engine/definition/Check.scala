@@ -5,6 +5,6 @@ import org.cucina.engine.ProcessContext
 /**
  * @author levinev
  */
-trait Check {
-  def test(processContext: ProcessContext): Boolean
+class Check(val className: String, val name: String = null, val parameters: Map[String, String] = null) {
+
 }

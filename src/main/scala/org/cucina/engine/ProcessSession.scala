@@ -3,11 +3,13 @@ package org.cucina.engine
 import org.slf4j.LoggerFactory
 import scala.collection.immutable.HashSet
 import org.cucina.engine.definition._
+import akka.actor.ActorRef
+import akka.actor.Actor
 
 /**
  * @author vlevine
  */
-class ProcessSession(processDefinition: ProcessDefinition) {
+class ProcessSession(tokenFactory: ActorRef) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   private[this] val ERROR_CONTEXT_IS_REQUIRED = s"Context is required."
 
@@ -25,7 +27,7 @@ class ProcessSession(processDefinition: ProcessDefinition) {
       // dead.
       new HashSet
     } else {
-      val currentState = processDefinition.findState(token.stateId)
+      val currentState = token.processDefinition.findState(token.stateId)
       currentState.getEnabledTransitions(processContext)
     }
   }
@@ -73,11 +75,11 @@ class ProcessSession(processDefinition: ProcessDefinition) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Object=" + domainObject)
     }
-null
+    null
     // Creating the handle. A token assigned to the same user as the
     // handle is also created
     // This token contains the start place.
-/*    val token: Token = processDriverFactory.getTokenFactory().createToken(processDefinition, domainObject)
+    /*    val token: Token = processDriverFactory.getTokenFactory().createToken(processDefinition, domainObject)
     val processContext: ProcessContext = createProcessContext(token, parameters)
 
     // Processing the state
@@ -87,7 +89,7 @@ null
     start.leave(findTransition(token, transitionId), processContext)
 
     token
-*/  }
+*/ }
 
   /**
    * Leaves the input {@link State} of the specified {@link Transition}
@@ -108,7 +110,7 @@ null
       LOG.debug("token = " + token)
     }
 
-    val currentstate: State = processDefinition.findState(token.stateId)
+    val currentstate: State = token.processDefinition.findState(token.stateId)
 
     try {
       if (LOG.isDebugEnabled()) {
@@ -145,6 +147,6 @@ null
   @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
   private def findTransition(token: Token, transitionId: String): Transition = {
-    processDefinition.findState(token.stateId).getTransition(transitionId)
+    token.processDefinition.findState(token.stateId).getTransition(transitionId)
   }
 }
