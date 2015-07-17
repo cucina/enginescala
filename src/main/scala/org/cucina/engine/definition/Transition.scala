@@ -6,15 +6,15 @@ import org.slf4j.LoggerFactory
 /**
  * @author levinev
  */
-class Transition(val id: String, val output: State, val input: State, checks: Iterable[Check]) {
+class Transition(val id: String, val output: State, val input: State, checks: Iterable[CheckDescriptor]) {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   def isEnabled(processContext: ProcessContext) = {
     input.canLeave(processContext) && (findFirstFailingCondition(processContext) == null)
   }
 
-  private[this] def findFirstFailingCondition(processContext: ProcessContext): Check = {
+  private[this] def findFirstFailingCondition(processContext: ProcessContext): CheckDescriptor = {
     if (checks != null) {
-      for (check: Check <- checks) {
+      for (check: CheckDescriptor <- checks) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Check is " + check)
         }

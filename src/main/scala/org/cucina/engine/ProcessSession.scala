@@ -5,6 +5,8 @@ import scala.collection.immutable.HashSet
 import org.cucina.engine.definition._
 import akka.actor.ActorRef
 import akka.actor.Actor
+import org.cucina.engine.actors.StartProcess
+import org.cucina.engine.actors.TokenResult
 
 /**
  * @author vlevine
@@ -58,7 +60,7 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
   def signal(processContext: ProcessContext, transitionId: String): Unit = {
     require(processContext != null, ERROR_CONTEXT_IS_REQUIRED)
 
-    signal(processContext, findTransition(processContext.token, transitionId))
+    signal(processContext, ProcessSession.findTransition(processContext.token, transitionId))
   }
 
   /**
@@ -70,27 +72,16 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
    */
   @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
-  def startProcessInstance(domainObject: Object, transitionId: String,
+  def startProcessInstance(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String,
     parameters: Map[String, Object]): Token = {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Object=" + domainObject)
     }
-    null
-    // Creating the handle. A token assigned to the same user as the
-    // handle is also created
-    // This token contains the start place.
-    /*    val token: Token = processDriverFactory.getTokenFactory().createToken(processDefinition, domainObject)
-    val processContext: ProcessContext = createProcessContext(token, parameters)
+    tokenFactory ! new StartProcess(processDefinition, domainObject, transitionId, parameters, self)
+    
+  }
 
-    // Processing the state
-    val start: State = processDefinition.startState
-
-    start.enter(null, processContext)
-    start.leave(findTransition(token, transitionId), processContext)
-
-    token
-*/ }
-
+ 
   /**
    * Leaves the input {@link State} of the specified {@link Transition}
    * provided that {@link State} is a valid state of the current workflow
@@ -135,7 +126,8 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
         throw new SignalFailedException("Unable to signal end of state [" + id + "]. See nested exception for more details", Some(e))
     }
   }
-
+}
+object ProcessSession {
   /**
    * Finds a transition corresponding to the specified ID using the state of
    * the supplied {@link Token}. If the {@link Token} has no children then the
@@ -146,7 +138,7 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
    */
   @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
-  private def findTransition(token: Token, transitionId: String): Transition = {
+  def findTransition(token: Token, transitionId: String): Transition = {
     token.processDefinition.findState(token.stateId).getTransition(transitionId)
   }
 }

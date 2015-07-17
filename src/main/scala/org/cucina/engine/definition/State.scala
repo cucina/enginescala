@@ -10,6 +10,7 @@ import java.lang.Boolean
 trait State {
   val id: String
   val allTransitions: Set[Transition]
+  val enterOperations: Set[OperationDescriptor]
   def enter(from: Transition, processContext: ProcessContext)
   def leave(transition: Transition, processContext: ProcessContext)
   def getTransition(transitionId: String): Transition
@@ -29,6 +30,16 @@ trait State {
    */
   def canLeave(processContext: ProcessContext): Boolean = {
     id.equals(processContext.token.stateId)
+  }
+
+  def enterInternal(processContext: ProcessContext) {
+    require(processContext != null, "ExecutionContext cannot be null")
+
+    val token = processContext.token
+
+    require(token != null, "Token cannot be null")
+
+    token.stateId = id
   }
 
 }

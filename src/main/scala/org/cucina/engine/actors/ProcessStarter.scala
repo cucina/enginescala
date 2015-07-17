@@ -2,40 +2,40 @@ package org.cucina.engine.actors
 
 import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.Props
+import org.cucina.engine.ProcessSession
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.definition.State
-import org.slf4j.LoggerFactory
-import org.cucina.engine.definition.ProcessDefinition
 
 /**
+ * A throwaway actor created for a request self-destructing after use
  * @author levinev
+ *
  */
+class ProcessStarter extends Actor {
+  import context._
+  private val target = context.actorOf(Props[TokenFactory], "tokenFactory")
 
-case class StartProcess(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef)
-
-
-class ProcessStarter(tokenFactory: ActorRef) extends Actor {
-  private[this] val LOG = LoggerFactory.getLogger(getClass())
-
-  def receive = {
-    case StartProcess(processDefinition, domainObject, transitionId, parameters, client) => {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Object=" + domainObject)
-      }
-
-      tokenFactory ! new CreateToken(processDefinition, domainObject)
-      
+  def receive = start
+  private def start: Receive = {
+    case sp @ StartProcess => {
+      target ! sp
+      context become waitForToken(sender)
     }
-    case TokenResult(token) => {
-      val processContext: ProcessContext = new ProcessContext(token, parameters)
-  
-      // Processing the state
-      val start: State = processDefinition.startState
+  }
 
-      start.enter(null, processContext)
-      start.leave(findTransition(token, transitionId), processContext)
+  private def waitForToken(origin: ActorRef): Receive = {
+    case TokenResult(token, op) => {
+      val startState = op.processDefinition.startState
+      val processContext = new ProcessContext(token, op.parameters)
 
-      client ! token
+      startState.enter(null, processContext);
+      startState.leave(ProcessSession.findTransition(token, op.transitionId), processContext);
+      tokenRepository ! Save(token)
+      origin ! token
+      stop(self)
     }
+    case re @ _ =>
+      origin ! re
+      stop(self)
   }
 }

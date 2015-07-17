@@ -1,27 +1,25 @@
 package org.cucina.engine.repository
 
-import org.cucina.engine.definition.Token
-import akka.actor.Actor
-import org.cucina.engine.actors.TokenMsg
-import org.cucina.engine.definition.ProcessDefinition
 import org.cucina.engine.actors.TokenNotFound
-import akka.actor.ActorRef
+import org.cucina.engine.actors.TokenRequest
+
+import akka.actor.Actor
+import akka.actor.actorRef2Scala
 
 /**
  * @author levinev
  */
 
-sealed trait TokenMessage
-case class FindByDomain(processDefintion: ProcessDefinition, domain: Object, client: ActorRef) extends TokenMessage
+case class FindByDomain(op:TokenRequest)
 
 class TokenRepository extends Actor {
 
   def receive = {
-    case FindByDomain(defin, domain, client) => {
+    case FindByDomain(op) => {
       // if found return TokenResult
-      // client ! TokenResult(token)
+      // client ! TokenResult(token, op)
       // else
-      sender ! TokenNotFound(defin, domain)
+      sender ! TokenNotFound(op)
     }
   }
 }
