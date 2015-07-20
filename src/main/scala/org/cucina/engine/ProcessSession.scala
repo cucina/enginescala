@@ -11,7 +11,7 @@ import org.cucina.engine.actors.TokenResult
 /**
  * @author vlevine
  */
-class ProcessSession(tokenFactory: ActorRef) extends Actor {
+class ProcessSession(tokenFactory: ActorRef) {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   private[this] val ERROR_CONTEXT_IS_REQUIRED = s"Context is required."
 
@@ -70,7 +70,7 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
    * supplied <code>ExecutionContext</code>.
    * <p/>
    */
-  @throws(classOf[SignalFailedException])
+ /* @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
   def startProcessInstance(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String,
     parameters: Map[String, Object]): Token = {
@@ -79,7 +79,7 @@ class ProcessSession(tokenFactory: ActorRef) extends Actor {
     }
     tokenFactory ! new StartProcess(processDefinition, domainObject, transitionId, parameters, self)
     
-  }
+  }*/
 
  
   /**

@@ -30,7 +30,7 @@ class ProcessStarter extends Actor {
 
       startState.enter(null, processContext);
       startState.leave(ProcessSession.findTransition(token, op.transitionId), processContext);
-      tokenRepository ! Save(token)
+//      tokenRepository ! Save(token)
       origin ! token
       stop(self)
     }

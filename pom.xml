@@ -48,7 +48,13 @@
 		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_2.11</artifactId>
-			<version>3.0.0-M6</version>
+			<version>3.0.0-M7</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.typesafe.akka</groupId>
+			<artifactId>akka-testkit_2.11</artifactId>
+			<version>2.4-M2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -82,6 +88,47 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.scalatest</groupId>
+				<artifactId>scalatest-maven-plugin</artifactId>
+				<version>1.0</version>
+				<configuration>
+					<!-- Skip coloring output on the console -->
+					<stdout>W</stdout>
+					<encoding>UTF-8</encoding>
+					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+					<!-- Enable XML reports -->
+					<junitxml>.</junitxml>
+					<!-- Enable HTML reports -->
+					<!-- <htmlreporters>${project.build.directory}/surefire-reports</htmlreporters> -->
+					<skipTests>false</skipTests>
+				</configuration>
+				<executions>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<phase>test</phase>
+						<configuration>
+							<suffixes>Spec</suffixes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>integration-test</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<phase>integration-test</phase>
+						<configuration>
+							<suffixes>SpecIT</suffixes>
+							<reportsDirectory>${project.build.directory}/it-surefire-reports</reportsDirectory>
+							<htmlreporters>${project.build.directory}/it-surefire-reports</htmlreporters>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 </project>

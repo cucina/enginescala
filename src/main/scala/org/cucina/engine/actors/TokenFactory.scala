@@ -11,8 +11,14 @@ import akka.actor.ActorRef
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.ProcessSession
 
-abstract class TokenRequest(val processDefinition: ProcessDefinition, val domainObject: Object, val transitionId: String, val parameters: Map[String, Object], val client: ActorRef)
-case class StartProcess(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef) extends TokenRequest(processDefinition, domainObject, transitionId, parameters, client)
+trait TokenRequest {
+  val processDefinition: ProcessDefinition
+  val domainObject: Object
+  val transitionId: String
+  val parameters: Map[String, Object]
+  val client: ActorRef
+}
+case class StartProcess(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef) extends TokenRequest
 case class TokenNotFound(op: TokenRequest)
 case class TokenResult(token: Token, op: TokenRequest)
 

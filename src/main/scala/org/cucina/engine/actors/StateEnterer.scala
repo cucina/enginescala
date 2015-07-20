@@ -20,12 +20,11 @@ class StateEnterer extends Actor {
       state.enterInternal(processContext)
       if (state.enterOperations.nonEmpty) {
         val opproc = context.actorOf(Props[OperationProcessor])
-        for (od <- state.enterOperations) {
-          opproc ! new OperationDescriptorWrap(od, processContext)
-        }
+        opproc ! new OperationDescriptorsWrap(state.enterOperations, processContext)
       }
-      sender ! new EnterStateResult
     }
+    case OperationComplete =>
+      sender ! new EnterStateResult
   }
 }
 

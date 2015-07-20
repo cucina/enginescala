@@ -19,12 +19,12 @@ class Transition(val id: String, val output: State, val input: State, checks: It
           LOG.debug("Check is " + check)
         }
 
-        if (!processContext.test(check)) {
+/*        if (!processContext.test(check)) {
           LOG.debug("Check failed!")
 
           return check
         }
-      }
+*/      }
     }
     return null
   }
