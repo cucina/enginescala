@@ -14,53 +14,55 @@ import org.slf4j.LoggerFactory
  * @author levinev
  */
 
-case class OperationDescriptorsWrap(operationDescriptors: Iterable[OperationDescriptor], processContext: ProcessContext)
+case class OperationDescriptorsWrap(operationDescriptors: Iterable[OperationDescriptor], processContext: ProcessContext) {
+  require(processContext != null, "ProcessContext cannot be null")
+}
 case class OperationRequest(operationParameters: Map[String, Object], processContext: ProcessContext)
 case class OperationResponse(processContext: ProcessContext)
-case class OperationComplete()
-case class OperationFailed(message: String)
+trait OriginMessage
+case class OperationComplete() extends OriginMessage
+case class OperationFailed(message: String, processContext: ProcessContext) extends OriginMessage
 
 class OperationProcessor extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
-  var els: Iterator[OperationDescriptor] = _
-  var origSender:ActorRef = _
-  def receive = start
-
-  private def start: Receive = {
+  def receive = {
     case OperationDescriptorsWrap(operationDescriptors, processContext) => {
       LOG.debug("Original sender " + sender)
       LOG.info("Me " + self)
       if (operationDescriptors == null) {
         LOG.debug("No OperationDescriptor")
         sender ! new Failure(new IllegalArgumentException("No operationDescriptor"))
-        self ! PoisonPill
+        //        self ! PoisonPill
       } else {
-        els = operationDescriptors.iterator
-        origSender = sender()
+        val els: Iterator[OperationDescriptor] = operationDescriptors.iterator
+        processContext.operationIterator = els
+        processContext.originalSender = sender()
         processEls(processContext)
-        context become response()
       }
     }
-  }
-  private def response(): Receive = {
     case OperationResponse(processContext) => processEls(processContext)
-    case of @ OperationFailed(_) => {
-      origSender ! of
-      self ! PoisonPill
+    case of @ OperationFailed(_, pc) => {
+      println(pc)
+      sendToOrigin(of, pc)
     }
   }
 
   private def processEls(processContext: ProcessContext) = {
-    if (els.hasNext) {
-      val operationDescriptor = els.next
+    val operationDescriptor = processContext.nextOperationDescriptor()
+    if (operationDescriptor != null) {
       LOG.debug("operationDescriptor:" + operationDescriptor)
       processNext(operationDescriptor, processContext)
     } else {
-      LOG.debug("End of operations " + origSender)
-      origSender ! new OperationComplete()
-      self ! PoisonPill
+      sendToOrigin(new OperationComplete, processContext)
     }
   }
+
+  private def sendToOrigin(om: OriginMessage, pc: ProcessContext) = {
+    // TODO null check
+    pc.originalSender ! om
+    //    self ! PoisonPill
+  }
+
   private def processNext(operationDescriptor: OperationDescriptor, processContext: ProcessContext) = {
     // operationDescriptor.parameters ++ processContext.parameters
     val op = if (operationDescriptor.name == null) context.actorOf(props(operationDescriptor.className, operationDescriptor.parameters))
@@ -70,6 +72,7 @@ class OperationProcessor extends Actor {
   }
 
   private def props(className: String, parameters: Map[String, Object]): Props = {
-    Props.apply(Class.forName(className))
+    // TODO 
+    Props.apply(Class.forName(className), parameters)
   }
 }

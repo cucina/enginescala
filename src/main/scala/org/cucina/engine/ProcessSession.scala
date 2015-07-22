@@ -7,6 +7,7 @@ import akka.actor.ActorRef
 import akka.actor.Actor
 import org.cucina.engine.actors.StartProcess
 import org.cucina.engine.actors.TokenResult
+import scala.collection.mutable.Map
 
 /**
  * @author vlevine

@@ -5,6 +5,7 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import org.cucina.engine.ProcessSession
 import org.cucina.engine.ProcessContext
+import scala.collection.mutable.Map
 
 /**
  * A throwaway actor created for a request self-destructing after use
@@ -26,7 +27,7 @@ class ProcessStarter extends Actor {
   private def waitForToken(origin: ActorRef): Receive = {
     case TokenResult(token, op) => {
       val startState = op.processDefinition.startState
-      val processContext = new ProcessContext(token, op.parameters)
+      val processContext = new ProcessContext(token, Map(op.parameters.toSeq: _*))
 
       startState.enter(null, processContext);
       startState.leave(ProcessSession.findTransition(token, op.transitionId), processContext);

@@ -3,9 +3,5 @@ package org.cucina.engine.definition
 /**
  * @author levinev
  */
-class OperationDescriptor(val className: String, val name: String = null, val parameters: Map[String, Object] = null) {
-  override def toString: String = {
-    val sb = new StringBuilder()
-    sb.append("className='").append(className).append("' name='").append(name).append("' parameters='").append(parameters).append("'").toString()
-  }
-}
+class OperationDescriptor(val className: String, val name: String = null, val parameters: Map[String, Object] = null) 
+extends ProcessElementDescriptor 

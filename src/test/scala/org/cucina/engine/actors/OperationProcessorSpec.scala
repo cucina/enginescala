@@ -1,16 +1,19 @@
 package org.cucina.engine.actors
 
+import scala.collection.mutable.Map
+import scala.collection.mutable.Set
 import scala.concurrent.duration.DurationInt
+import org.cucina.engine.ProcessContext
+import org.cucina.engine.definition.OperationDescriptor
+import org.cucina.engine.definition.Token
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Matchers
 import org.scalatest.WordSpecLike
 import akka.actor._
+import akka.actor.Status.Failure
 import akka.testkit.ImplicitSender
 import akka.testkit.TestKit
-import akka.testkit.TestActorRef
-import org.cucina.engine.definition.OperationDescriptor
-import akka.actor.Status.Failure
-import scala.collection.mutable.Set
+import scala.collection.mutable.HashMap
 
 /**
  * @author levinev
@@ -21,18 +24,19 @@ class OperationProcessorSpec
     with ImplicitSender
     with Matchers
     with BeforeAndAfterAll {
-
-  override def afterAll {
+  //  val actorRef = TestActorRef[OperationProcessor]
+  val actorRef = system.actorOf(Props[OperationProcessor], "opproc")
+  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object]())
+  /*override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-
+*/
   "OperationProcessor actor" when {
 
     "receiving null OperationDescriptor" should {
       "return Failure" in {
-        val actorRef = TestActorRef[OperationProcessor]
         within(500 millis) {
-          actorRef ! new OperationDescriptorsWrap(null, null)
+          actorRef ! new OperationDescriptorsWrap(null, processContext)
           expectMsgPF() {
             case Failure(ex: Exception) => assert("No operationDescriptor" == ex.getMessage)
           }
@@ -44,11 +48,10 @@ class OperationProcessorSpec
       "return OperationFailed" in {
         val opds = Set[OperationDescriptor]()
         opds += new OperationDescriptor(Predef.classOf[FailedStub].getName, "failee")
-        val actorRef = TestActorRef[OperationProcessor]
         within(500 millis) {
-          actorRef ! new OperationDescriptorsWrap(opds, null)
+          actorRef ! new OperationDescriptorsWrap(opds, processContext)
           expectMsgPF() {
-            case OperationFailed(msg: String) => assert("Whoops" == msg)
+            case OperationFailed(msg: String, _) => assert("Whoops" == msg)
           }
         }
       }
@@ -59,9 +62,8 @@ class OperationProcessorSpec
         val opds = Set[OperationDescriptor]()
         opds += new OperationDescriptor(Predef.classOf[GoodStub].getName)
         opds += new OperationDescriptor(Predef.classOf[GoodStub].getName)
-        val actorRef = TestActorRef[OperationProcessor]
         within(500 millis) {
-          actorRef ! new OperationDescriptorsWrap(opds, null)
+          actorRef ! new OperationDescriptorsWrap(opds, processContext)
           expectMsg(OperationComplete())
         }
       }
@@ -69,17 +71,17 @@ class OperationProcessorSpec
   }
 }
 
-class FailedStub extends Actor {
+class FailedStub(val parameters:Map[String, Object]) extends Actor {
   def receive = {
     case OperationRequest(parameters @ _, processContext @ _) => {
-      sender ! new OperationFailed("Whoops")
+      sender ! new OperationFailed("Whoops", processContext)
     }
     case r @ _ => println("Unknown " + r)
 
   }
 }
 
-class GoodStub extends Actor {
+class GoodStub(val parameters:Map[String, Object]) extends Actor {
   def receive = {
     case OperationRequest(parameters @ _, processContext @ _) => {
       sender ! new OperationResponse(processContext)

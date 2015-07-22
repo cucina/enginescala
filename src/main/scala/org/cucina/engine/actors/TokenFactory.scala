@@ -47,7 +47,7 @@ class TokenFactory extends Actor {
 
   }
   private def postProcess(token: Token, op: TokenRequest) = {
-    val processContext: ProcessContext = new ProcessContext(token, op.parameters)
+    val processContext: ProcessContext = new ProcessContext(token, scala.collection.mutable.Map(op.parameters.toSeq: _*))
 
     // Processing the state
     val start = op.processDefinition.startState
