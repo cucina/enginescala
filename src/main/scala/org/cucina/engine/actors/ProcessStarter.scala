@@ -5,38 +5,29 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import org.cucina.engine.ProcessSession
 import org.cucina.engine.ProcessContext
-import scala.collection.mutable.Map
+import org.cucina.engine.definition.ProcessDefinition
 
 /**
- * A throwaway actor created for a request self-destructing after use
  * @author levinev
  *
  */
+trait TokenRequest {
+  val domainObject: Object
+  val transitionId: String
+  val parameters: Map[String, Object]
+  val client: ActorRef
+}
+
+case class StartProcess(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object])
+  
 class ProcessStarter extends Actor {
   import context._
   private val target = context.actorOf(Props[TokenFactory], "tokenFactory")
 
   def receive = start
   private def start: Receive = {
-    case sp @ StartProcess => {
-      target ! sp
-      context become waitForToken(sender)
+    case sp @ StartProcess(_, _, _, _) => {
+      target ! new StartToken(sp.processDefinitionName, sp.domainObject, sp.transitionId, sp.parameters, sender())
     }
-  }
-
-  private def waitForToken(origin: ActorRef): Receive = {
-    case TokenResult(token, op) => {
-      val startState = op.processDefinition.startState
-      val processContext = new ProcessContext(token, Map(op.parameters.toSeq: _*))
-
-      startState.enter(null, processContext);
-      startState.leave(ProcessSession.findTransition(token, op.transitionId), processContext);
-//      tokenRepository ! Save(token)
-      origin ! token
-      stop(self)
-    }
-    case re @ _ =>
-      origin ! re
-      stop(self)
   }
 }

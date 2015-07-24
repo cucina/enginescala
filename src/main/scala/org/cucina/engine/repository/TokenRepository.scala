@@ -2,9 +2,9 @@ package org.cucina.engine.repository
 
 import org.cucina.engine.actors.TokenNotFound
 import org.cucina.engine.actors.TokenRequest
-
 import akka.actor.Actor
 import akka.actor.actorRef2Scala
+import org.cucina.engine.actors.TokenNotFound
 
 /**
  * @author levinev

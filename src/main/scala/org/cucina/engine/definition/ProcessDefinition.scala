@@ -14,8 +14,8 @@ import scala.collection.mutable.Map
  * @see State
  * @see Transition
  */
-class ProcessDefinition(val startState:State, description:String, id:String) {
-  private[this] val states: Map[String, State] = new HashMap[String, State]
+class ProcessDefinition(val startState:StateDescriptor, description:String, val id:String) {
+  private[this] val states: Map[String, StateDescriptor] = new HashMap[String, StateDescriptor]
 
   /**
    * JAVADOC.
@@ -23,8 +23,8 @@ class ProcessDefinition(val startState:State, description:String, id:String) {
    * @param places
    *            JAVADOC.
    */
-  def setAllStates(statesArray: Array[State]) = {
-    for (s: State <- statesArray) {
+  def setAllStates(statesArray: Array[StateDescriptor]) = {
+    for (s: StateDescriptor <- statesArray) {
       registerState(s)
     }
   }
@@ -33,7 +33,7 @@ class ProcessDefinition(val startState:State, description:String, id:String) {
    * Retrieves all the {@link State} that are part of this
    * <code>ProcessDefinition</code>.
    */
-  def getAllPlaces(): Iterable[State] = {
+  def getAllStates(): Iterable[StateDescriptor] = {
     states.values
   }
 
@@ -41,8 +41,8 @@ class ProcessDefinition(val startState:State, description:String, id:String) {
    * Finds a {@link State} that is part of this
    * <code>WorkflowDefinition</code> by ID.
    */
-  def findState(stateId: String): State = {
-    val place: State = states.get(stateId).get
+  def findState(stateId: String): StateDescriptor = {
+    val place: StateDescriptor = states.get(stateId).get
 
     if (place == null) {
       throw new SignalFailedException("Failed to find state named '" + stateId + "' in workflow '" + id + "'")
@@ -54,7 +54,7 @@ class ProcessDefinition(val startState:State, description:String, id:String) {
   /**
    * Registers a {@link State} as part of the <code>WorkflowDefinition</code>.
    */
-  private def registerState(state: State) = {
+  private def registerState(state: StateDescriptor) = {
     states.put(state.id, state)
   }
 

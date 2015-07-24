@@ -6,10 +6,10 @@ import org.slf4j.LoggerFactory
 /**
  * @author levinev
  */
-class Transition(val id: String, val output: State, val input: State, checks: Iterable[CheckDescriptor]) {
+class TransitionDescriptor(val id: String, val output: StateDescriptor, checks: Iterable[CheckDescriptor]) {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   def isEnabled(processContext: ProcessContext) = {
-    input.canLeave(processContext) && (findFirstFailingCondition(processContext) == null)
+    //input.canLeave(processContext) && (findFirstFailingCondition(processContext) == null)
   }
 
   private[this] def findFirstFailingCondition(processContext: ProcessContext): CheckDescriptor = {

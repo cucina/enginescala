@@ -11,14 +11,8 @@ import akka.actor.ActorRef
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.ProcessSession
 
-trait TokenRequest {
-  val processDefinition: ProcessDefinition
-  val domainObject: Object
-  val transitionId: String
-  val parameters: Map[String, Object]
-  val client: ActorRef
-}
-case class StartProcess(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef) extends TokenRequest
+case class StartToken(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef)
+  extends TokenRequest
 case class TokenNotFound(op: TokenRequest)
 case class TokenResult(token: Token, op: TokenRequest)
 
@@ -27,33 +21,33 @@ case class TokenResult(token: Token, op: TokenRequest)
  */
 class TokenFactory extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
+  private[this] val target = context.actorOf(Props[ProcessInstanceFactory], "processInstanceFactory")
 
   def receive = {
-    case op @ StartProcess(processDefinition, domainObject, transitionId, parameters, client) => {
-      require(processDefinition != null, "The 'processDefinition' parameter cannot be null.")
-      require(domainObject != null, "The 'domainObject' parameter cannot be null.")
-
+    case st @ StartToken(_, _, _, _, _) => {
+      require(st.domainObject != null, "The 'domainObject' parameter cannot be null.")
       val tokenRepository = context.actorOf(Props[TokenRepository], name = "tokenRepository")
       // call to tokenRepository to find an existing one for the object
-      tokenRepository ! new FindByDomain(op)
+      tokenRepository ! new FindByDomain(st)
     }
     case TokenResult(token: Token, op: TokenRequest) =>
-      postProcess(token, op)
+      op match {
+        case st @ StartToken(_, _, _, _, _) => {
+          postProcess(token, st)
+        }
+      }
 
     case TokenNotFound(op: TokenRequest) => {
-      val token = new Token(op.domainObject, op.processDefinition)
-      postProcess(token, op)
+      op match {
+        case st @ StartToken(_, _, _, _, _) => {
+          postProcess(new Token(st.domainObject), st)
+        }
+      }
     }
 
   }
-  private def postProcess(token: Token, op: TokenRequest) = {
-    val processContext: ProcessContext = new ProcessContext(token, scala.collection.mutable.Map(op.parameters.toSeq: _*))
-
-    // Processing the state
-    val start = op.processDefinition.startState
-
-    start.enter(null, processContext)
-    start.leave(ProcessSession.findTransition(token, op.transitionId), processContext)
-    op.client ! new TokenResult(token, op)
+  private def postProcess(token: Token, op: StartToken) = {
+    val processContext: ProcessContext = new ProcessContext(token, scala.collection.mutable.Map(op.parameters.toSeq: _*), op.client)
+    target ! new StartInstance(op.processDefinitionName, processContext, op.transitionId)
   }
 }

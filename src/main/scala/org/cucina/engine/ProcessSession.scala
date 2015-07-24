@@ -1,13 +1,12 @@
 package org.cucina.engine
 
-import org.slf4j.LoggerFactory
 import scala.collection.immutable.HashSet
-import org.cucina.engine.definition._
-import akka.actor.ActorRef
-import akka.actor.Actor
-import org.cucina.engine.actors.StartProcess
-import org.cucina.engine.actors.TokenResult
 import scala.collection.mutable.Map
+
+import org.cucina.engine.definition._
+import org.slf4j.LoggerFactory
+
+import akka.actor.ActorRef
 
 /**
  * @author vlevine
@@ -22,7 +21,7 @@ class ProcessSession(tokenFactory: ActorRef) {
    * by the {@link WorkflowInstanceHandle} in the supplied
    * {@link ExecutionContext}.
    */
-  def getAvailableTransitions(processContext: ProcessContext): Set[Transition] = {
+  def getAvailableTransitions(processContext: ProcessContext): Set[TransitionDescriptor] = {
     val token = processContext.token
 
     if (token.hasChildren()) {
@@ -31,22 +30,15 @@ class ProcessSession(tokenFactory: ActorRef) {
       new HashSet
     } else {
       val currentState = token.processDefinition.findState(token.stateId)
-      currentState.getEnabledTransitions(processContext)
+      //currentState.getEnabledTransitions(processContext)
+      currentState.allTransitions
     }
-  }
-
-  /**
-   * Creates a {@link DefaultExecutionContext} to wrap the supplied
-   * {@link Token} and {@link ExecutionContext}.
-   */
-  def createProcessContext(token: Token, parameters: Map[String, Object]): ProcessContext = {
-    new ProcessContext(token, parameters)
   }
 
   /**
    * Delegates to {@link #doSignal}.
    */
-  def signal(processContext: ProcessContext, transition: Transition): Unit = {
+  def signal(processContext: ProcessContext, transition: TransitionDescriptor): Unit = {
     require(processContext != null, ERROR_CONTEXT_IS_REQUIRED)
     require(transition != null, "Cannot move to a null transition")
 
@@ -71,7 +63,7 @@ class ProcessSession(tokenFactory: ActorRef) {
    * supplied <code>ExecutionContext</code>.
    * <p/>
    */
- /* @throws(classOf[SignalFailedException])
+  /* @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
   def startProcessInstance(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String,
     parameters: Map[String, Object]): Token = {
@@ -82,7 +74,6 @@ class ProcessSession(tokenFactory: ActorRef) {
     
   }*/
 
- 
   /**
    * Leaves the input {@link State} of the specified {@link Transition}
    * provided that {@link State} is a valid state of the current workflow
@@ -93,7 +84,7 @@ class ProcessSession(tokenFactory: ActorRef) {
    */
   @throws(classOf[CheckNotMetException])
   @throws(classOf[SignalFailedException])
-  private def doSignal(processContext: ProcessContext, transition: Transition) = {
+  private def doSignal(processContext: ProcessContext, transition: TransitionDescriptor) = {
     val token: Token = processContext.token
 
     require(token != null, "Null token in the executionContext")
@@ -102,7 +93,7 @@ class ProcessSession(tokenFactory: ActorRef) {
       LOG.debug("token = " + token)
     }
 
-    val currentstate: State = token.processDefinition.findState(token.stateId)
+    val currentstate: StateDescriptor = token.processDefinition.findState(token.stateId)
 
     try {
       if (LOG.isDebugEnabled()) {
@@ -110,7 +101,7 @@ class ProcessSession(tokenFactory: ActorRef) {
           transition.id + " transition.output.id=" + transition.output.id)
       }
 
-      currentstate.leave(transition, processContext)
+      //currentstate.leave(transition, processContext)
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("After leaving place id=" + token.stateId)
@@ -139,7 +130,8 @@ object ProcessSession {
    */
   @throws(classOf[SignalFailedException])
   @throws(classOf[TransitionNotFoundException])
-  def findTransition(token: Token, transitionId: String): Transition = {
-    token.processDefinition.findState(token.stateId).getTransition(transitionId)
+  def findTransition(token: Token, transitionId: String): TransitionDescriptor = {
+    //token.processDefinition.findState(token.stateId).getTransition(transitionId)
+    null
   }
 }

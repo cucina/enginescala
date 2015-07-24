@@ -2,13 +2,12 @@ package org.cucina.engine.actors
 
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.definition.OperationDescriptor
+import org.slf4j.LoggerFactory
+
 import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.actor.Status.Failure
 import akka.actor.actorRef2Scala
-import org.slf4j.LoggerFactory
 
 /**
  * @author levinev
@@ -20,7 +19,7 @@ case class OperationDescriptorsWrap(operationDescriptors: Iterable[OperationDesc
 case class OperationRequest(operationParameters: Map[String, Object], processContext: ProcessContext)
 case class OperationResponse(processContext: ProcessContext)
 trait OriginMessage
-case class OperationComplete() extends OriginMessage
+case class OperationComplete(processContext: ProcessContext) extends OriginMessage
 case class OperationFailed(message: String, processContext: ProcessContext) extends OriginMessage
 
 class OperationProcessor extends Actor {
@@ -32,19 +31,15 @@ class OperationProcessor extends Actor {
       if (operationDescriptors == null) {
         LOG.debug("No OperationDescriptor")
         sender ! new Failure(new IllegalArgumentException("No operationDescriptor"))
-        //        self ! PoisonPill
       } else {
         val els: Iterator[OperationDescriptor] = operationDescriptors.iterator
         processContext.operationIterator = els
-        processContext.originalSender = sender()
+        processContext.stackCaller = sender()
         processEls(processContext)
       }
     }
     case OperationResponse(processContext) => processEls(processContext)
-    case of @ OperationFailed(_, pc) => {
-      println(pc)
-      sendToOrigin(of, pc)
-    }
+    case of @ OperationFailed(_, pc) => sendToOrigin(of, pc)
   }
 
   private def processEls(processContext: ProcessContext) = {
@@ -53,14 +48,13 @@ class OperationProcessor extends Actor {
       LOG.debug("operationDescriptor:" + operationDescriptor)
       processNext(operationDescriptor, processContext)
     } else {
-      sendToOrigin(new OperationComplete, processContext)
+      sendToOrigin(new OperationComplete(processContext), processContext)
     }
   }
 
   private def sendToOrigin(om: OriginMessage, pc: ProcessContext) = {
     // TODO null check
-    pc.originalSender ! om
-    //    self ! PoisonPill
+    pc.stackCaller ! om
   }
 
   private def processNext(operationDescriptor: OperationDescriptor, processContext: ProcessContext) = {

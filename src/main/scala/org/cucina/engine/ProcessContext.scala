@@ -9,8 +9,8 @@ import akka.actor.ActorRef
 /**
  * @author levinev
  */
-class ProcessContext(val token: Token, val parameters: Map[String, Object]) {
-  var originalSender: ActorRef = _
+class ProcessContext(val token: Token, val parameters: Map[String, Object], val client:ActorRef) {
+  var stackCaller: ActorRef = _
   var operationIterator: Iterator[OperationDescriptor] = _
 
   def nextOperationDescriptor(): OperationDescriptor = {
@@ -24,5 +24,9 @@ class ProcessContext(val token: Token, val parameters: Map[String, Object]) {
         od
       }
     } else null
+  }
+
+  override def toString(): String = {
+    "ProcessContext: token=" + token + " stackCaller=" + stackCaller
   }
 }

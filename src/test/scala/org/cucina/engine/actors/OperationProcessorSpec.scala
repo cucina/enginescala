@@ -1,36 +1,41 @@
 package org.cucina.engine.actors
 
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
 import scala.concurrent.duration.DurationInt
+
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.definition.OperationDescriptor
 import org.cucina.engine.definition.Token
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Matchers
 import org.scalatest.WordSpecLike
-import akka.actor._
+
+import akka.actor.Actor
+import akka.actor.ActorSystem
+import akka.actor.Props
 import akka.actor.Status.Failure
+import akka.actor.actorRef2Scala
 import akka.testkit.ImplicitSender
 import akka.testkit.TestKit
-import scala.collection.mutable.HashMap
 
 /**
  * @author levinev
  */
 class OperationProcessorSpec
-    extends TestKit(ActorSystem("OperationProcessorSpec"))
+    extends TestKit(ActorSystem("cucina-test"))
     with WordSpecLike
     with ImplicitSender
     with Matchers
     with BeforeAndAfterAll {
-  //  val actorRef = TestActorRef[OperationProcessor]
   val actorRef = system.actorOf(Props[OperationProcessor], "opproc")
-  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object]())
-  /*override def afterAll {
+  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), null)
+
+  override def afterAll {
     TestKit.shutdownActorSystem(system)
   }
-*/
+
   "OperationProcessor actor" when {
 
     "receiving null OperationDescriptor" should {
@@ -64,7 +69,7 @@ class OperationProcessorSpec
         opds += new OperationDescriptor(Predef.classOf[GoodStub].getName)
         within(500 millis) {
           actorRef ! new OperationDescriptorsWrap(opds, processContext)
-          expectMsg(OperationComplete())
+          expectMsg(OperationComplete(processContext))
         }
       }
     }
