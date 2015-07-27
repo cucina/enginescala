@@ -4,11 +4,12 @@ package org.cucina.engine.definition
  * @author levinev
  */
 trait ProcessElementDescriptor {
-  def className:String
-  def name:String
-  def parameters: Map[String, Object]
+  val className: String
+  val name: String
+  val arguments: Seq[Any]
+
   override def toString: String = {
     val sb = new StringBuilder()
-    sb.append("className='").append(className).append("' name='").append(name).append("' parameters='").append(parameters).append("'").toString()
+    sb.append("className='").append(className).append("' name='").append(name).append("' arguments='").append(arguments).append("'").toString()
   }
 }

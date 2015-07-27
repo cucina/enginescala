@@ -1,6 +1,7 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.ProcessContext
+import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.OperationDescriptor
 import org.slf4j.LoggerFactory
 
@@ -16,13 +17,13 @@ import akka.actor.actorRef2Scala
 case class OperationDescriptorsWrap(operationDescriptors: Iterable[OperationDescriptor], processContext: ProcessContext) {
   require(processContext != null, "ProcessContext cannot be null")
 }
-case class OperationRequest(operationParameters: Map[String, Object], processContext: ProcessContext)
+case class OperationRequest(rocessContext: ProcessContext)
 case class OperationResponse(processContext: ProcessContext)
 trait OriginMessage
 case class OperationComplete(processContext: ProcessContext) extends OriginMessage
 case class OperationFailed(message: String, processContext: ProcessContext) extends OriginMessage
 
-class OperationProcessor extends Actor {
+class OperationProcessor extends Actor with ActorFinder {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   def receive = {
     case OperationDescriptorsWrap(operationDescriptors, processContext) => {
@@ -59,10 +60,9 @@ class OperationProcessor extends Actor {
 
   private def processNext(operationDescriptor: OperationDescriptor, processContext: ProcessContext) = {
     // operationDescriptor.parameters ++ processContext.parameters
-    val op = if (operationDescriptor.name == null) context.actorOf(props(operationDescriptor.className, operationDescriptor.parameters))
-    else context.actorOf(props(operationDescriptor.className, operationDescriptor.parameters), operationDescriptor.name)
+    val op = findActor(operationDescriptor, context)
     LOG.debug("operation actor=" + op)
-    op ! new OperationRequest(operationDescriptor.parameters, processContext)
+    op ! new OperationRequest(processContext)
   }
 
   private def props(className: String, parameters: Map[String, Object]): Props = {

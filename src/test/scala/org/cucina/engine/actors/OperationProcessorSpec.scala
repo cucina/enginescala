@@ -78,7 +78,7 @@ class OperationProcessorSpec
 
 class FailedStub(val parameters:Map[String, Object]) extends Actor {
   def receive = {
-    case OperationRequest(parameters @ _, processContext @ _) => {
+    case OperationRequest(processContext @ _) => {
       sender ! new OperationFailed("Whoops", processContext)
     }
     case r @ _ => println("Unknown " + r)
@@ -88,7 +88,7 @@ class FailedStub(val parameters:Map[String, Object]) extends Actor {
 
 class GoodStub(val parameters:Map[String, Object]) extends Actor {
   def receive = {
-    case OperationRequest(parameters @ _, processContext @ _) => {
+    case OperationRequest(processContext @ _) => {
       sender ! new OperationResponse(processContext)
       println(self)
     }

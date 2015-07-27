@@ -6,6 +6,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
 import akka.actor.Props
+import org.slf4j.LoggerFactory
 
 /**
  * @author levinev
@@ -13,26 +14,30 @@ import akka.actor.Props
 case class Occur(processContext: ProcessContext)
 
 class TransitionActor(id: String, output: StateDescriptor, leaveOperations: Iterable[OperationDescriptor]) extends Actor {
+  private val LOG = LoggerFactory.getLogger(getClass)
+
   def receive = {
     case Occur(pc) => {
       pc.token.stateId = null
       fireOperations(leaveOperations, pc)
       publishLeaveEvent(id, pc)
-      ///      state ! new EnterState(id, pc)
+      findOutput() ! new EnterState(id, pc)
     }
-    case _ =>
+    case e@_ => LOG.debug("Unknown event:" + e)
   }
 
-  private def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
+   def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
+    for (lo <- ops) {
+      // TODO
+    }
+  }
+
+   def publishLeaveEvent(id: String, processontext: ProcessContext) = {
 
   }
 
-  private def publishLeaveEvent(id: String, processontext: ProcessContext) = {
-
-  }
-
-  private def findOutput(): ActorRef = {
-
+   def findOutput(): ActorRef = {
+    null
   }
 }
 
