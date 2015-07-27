@@ -20,8 +20,6 @@ class ProcessDefinition(val startState:StateDescriptor, description:String, val 
   /**
    * JAVADOC.
    *
-   * @param places
-   *            JAVADOC.
    */
   def setAllStates(statesArray: Array[StateDescriptor]) = {
     for (s: StateDescriptor <- statesArray) {

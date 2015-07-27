@@ -14,7 +14,6 @@ class StateProducer(clazz: Class[_ <: Actor], args: AnyRef*) extends IndirectAct
     }
 
     instantiate(clazz)(args)
-
   }
 
   override def actorClass: Class[_ <: Actor] = clazz
