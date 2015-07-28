@@ -53,7 +53,7 @@ class ProcessDefinition(val startState:StateDescriptor, description:String, val 
    * Registers a {@link State} as part of the <code>WorkflowDefinition</code>.
    */
   private def registerState(state: StateDescriptor) = {
-    states.put(state.id, state)
+    states.put(state.name, state)
   }
 
   /*private void readObject(java.io.ObjectInputStream in)

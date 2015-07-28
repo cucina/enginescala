@@ -21,7 +21,6 @@ with MockitoSugar {
   "ActorFinder" when {
     "creating EmptyActor" should {
       "return reference" in {
-
         val wrap = new Wrap
         val context = mock[ActorContext]
         when(context.actorSelection("empty")).thenThrow(new ActorNotFound(null))
@@ -29,6 +28,9 @@ with MockitoSugar {
         when(context.actorOf(anyObject[Props], anyString())).thenReturn(ar)
         val cre = wrap.findActor(new EmptyDescriptor, context)
         assert(cre != null)
+      }
+      "fail for invalid arguments" in {
+
       }
     }
   }
@@ -38,17 +40,6 @@ with MockitoSugar {
     import scala.reflect.runtime._
     "creating EmptyActor" should {
       "create one" in {
-/*
-        val ru = universe
-        val m = ru.runtimeMirror(classOf[EmptyActor].getClassLoader)
-        val clazz = ru.typeOf[EmptyActor].typeSymbol.asClass
-        val cm = m.reflectClass(clazz)
-        println("cm=" + cm)
-        val ctorC = ru.typeOf[EmptyActor].decl(ru.termNames.CONSTRUCTOR).asMethod
-        println("ctorC=" + ctorC)
-        val ctorm = cm.reflectConstructor(ctorC)
-        println("ctorm=" + ctorm)
-*/
         val a = Props(classOf[EmptyActor], Array[Any]("name", 1):_*)
         println("Actor:" + a)
       }

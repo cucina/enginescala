@@ -25,6 +25,7 @@ case class OperationFailed(message: String, processContext: ProcessContext) exte
 
 class OperationProcessor extends Actor with ActorFinder {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
+
   def receive = {
     case OperationDescriptorsWrap(operationDescriptors, processContext) => {
       LOG.debug("Original sender " + sender)
@@ -46,7 +47,7 @@ class OperationProcessor extends Actor with ActorFinder {
   private def processEls(processContext: ProcessContext) = {
     val operationDescriptor = processContext.nextOperationDescriptor()
     if (operationDescriptor != null) {
-      LOG.debug("operationDescriptor:" + operationDescriptor)
+      LOG.info("operationDescriptor:" + operationDescriptor)
       processNext(operationDescriptor, processContext)
     } else {
       sendToOrigin(new OperationComplete(processContext), processContext)

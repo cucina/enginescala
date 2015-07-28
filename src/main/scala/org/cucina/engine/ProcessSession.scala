@@ -31,7 +31,8 @@ class ProcessSession(tokenFactory: ActorRef) {
     } else {
       val currentState = token.processDefinition.findState(token.stateId)
       //currentState.getEnabledTransitions(processContext)
-      currentState.allTransitions
+      //currentState.allTransitions
+      null
     }
   }
 
@@ -98,7 +99,7 @@ class ProcessSession(tokenFactory: ActorRef) {
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Before leaving place " + token.stateId + " transition.id=" +
-          transition.id + " transition.output.id=" + transition.output.id)
+          transition.name)
       }
 
       //currentstate.leave(transition, processContext)
@@ -119,6 +120,7 @@ class ProcessSession(tokenFactory: ActorRef) {
     }
   }
 }
+
 object ProcessSession {
   /**
    * Finds a transition corresponding to the specified ID using the state of

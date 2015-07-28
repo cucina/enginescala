@@ -1,7 +1,8 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.definition.{StateDescriptor, OperationDescriptor}
+import org.cucina.engine.actors.support.ActorFinder
+import org.cucina.engine.definition.{CheckDescriptor, StateDescriptor, OperationDescriptor}
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
@@ -13,32 +14,46 @@ import org.slf4j.LoggerFactory
  */
 case class Occur(processContext: ProcessContext)
 
-class TransitionActor(id: String, output: StateDescriptor, leaveOperations: Iterable[OperationDescriptor]) extends Actor {
+case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescriptor])
+
+case class CheckFailed(checkName: String, reason: String)
+
+class TransitionActor(name: String, output: StateDescriptor, leaveOperations: Iterable[OperationDescriptor], checks: Seq[CheckDescriptor])
+  extends Actor with ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def receive = {
     case Occur(pc) => {
       pc.token.stateId = null
-      fireOperations(leaveOperations, pc)
-      publishLeaveEvent(id, pc)
-      findOutput() ! new EnterState(id, pc)
+      runChecks(pc, checks)
+    }
+    case CheckPassed(pc, re) => runChecks(pc, re)
+    case CheckFailed(cn, reason) => {
+      LOG.info("Failed check :" + cn + " due to " + reason)
+      // TODO anything else to remain in the current state?
     }
     case e@_ => LOG.debug("Unknown event:" + e)
   }
 
-   def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
+  def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
     for (lo <- ops) {
-      // TODO
+      // TODO pull the trait
     }
   }
 
-   def publishLeaveEvent(id: String, processontext: ProcessContext) = {
-
+  def publishLeaveEvent(id: String, processontext: ProcessContext) = {
+    // TODO pull trait
   }
 
-   def findOutput(): ActorRef = {
-    null
+  private def runChecks(pc: ProcessContext, chex: Seq[CheckDescriptor]): Unit = {
+    if (chex.isEmpty) {
+      fireOperations(leaveOperations, pc)
+      publishLeaveEvent(name, pc)
+      findActor(output, context) ! new EnterState(name, pc)
+    } else
+      findActor(chex.head, context) ! new CheckRequest(pc, chex.tail)
   }
+
 }
 
 object TransitionActor {

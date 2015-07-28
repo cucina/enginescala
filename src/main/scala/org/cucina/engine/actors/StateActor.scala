@@ -1,5 +1,7 @@
 package org.cucina.engine.actors
 
+import org.cucina.engine.actors.support.ActorFinder
+
 import scala.collection.mutable.Map
 
 import org.cucina.engine.ProcessContext
@@ -17,24 +19,26 @@ import akka.actor.Props
  */
 
 case class EnterState(transitionName: String, processContext: ProcessContext)
-
 case class LeaveState(transitionName: String, processContext: ProcessContext)
 
-class StateActor(id: String, enterOperations: Iterable[OperationDescriptor], leaveOperations: Iterable[OperationDescriptor], transitions: Iterable[TransitionDescriptor])
-  extends Actor {
+class StateActor(name: String,
+                 enterOperations: Iterable[OperationDescriptor],
+                 leaveOperations: Iterable[OperationDescriptor],
+                 transitions: Iterable[TransitionDescriptor])
+  extends Actor with ActorFinder {
   val LOG = LoggerFactory.getLogger(getClass())
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   def receive = {
     case EnterState(tr, pc) => {
-      pc.token.stateId = id
+      pc.token.stateId = name
       fireOperations(enterOperations, pc)
-      publishEnterEvent(id, tr, pc)
+      publishEnterEvent(name, tr, pc)
     }
 
     case LeaveState(tr, pc) => {
       if (!canLeave(pc)) {
-        throw new IllegalArgumentException("Cannot leave current Place '" + id +
+        throw new IllegalArgumentException("Cannot leave current Place '" + name +
           "' since it is not the active place associated with the supplied ExecutionContext")
       }
 
@@ -53,8 +57,8 @@ class StateActor(id: String, enterOperations: Iterable[OperationDescriptor], lea
   }
 
   private def buildTransition(name: String): ActorRef = {
-    val transitionDescriptor = transitions.find(_.id == name).get
-    context.system.actorOf(TransitionActor.props(transitionDescriptor.id, transitionDescriptor.output, null))
+    val transitionDescriptor = transitions.find(_.name == name).get
+    findActor(transitionDescriptor, context)
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {
@@ -62,11 +66,11 @@ class StateActor(id: String, enterOperations: Iterable[OperationDescriptor], lea
   }
 
   private def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
-    // TODO call to OperationProcessor
+    // TODO call to OperationProcessor - create trait for it
   }
 
   private def publishEnterEvent(id: String, from: String, pc: ProcessContext) = {
-
+    // TODO create trait to publish
   }
 }
 

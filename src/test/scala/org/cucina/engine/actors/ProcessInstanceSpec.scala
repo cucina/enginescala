@@ -22,8 +22,8 @@ with WordSpecLike
 with Matchers
 with BeforeAndAfterAll
 with BeforeAndAfter {
-
-  val state = new StateDescriptor("start", Set.empty, Set.empty, null)
+  var called: Boolean = false
+  val state = new StateDescriptor(classOf[LocalState].getName, "start", called :: Nil)
   val definition = new ProcessDefinition(state, "xxx", "xx")
   val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), null)
 
@@ -57,22 +57,30 @@ with BeforeAndAfter {
         within(500 millis) {
           val defin = new ProcessDefinition(state, "aaa", "xx")
           val local = system.actorOf(ProcessInstance.props(defin), "test_local")
-          var called: Boolean = false
-          val stateA = system.actorOf(Props(new LocalState(called)), "start")
           local ! new ExecuteStart(processContext, "one")
-          assert(called)
+          expectMsgPF()  {
+            case ExecuteComplete(pc) => {
+              println(pc.parameters)
+              assert(pc.parameters.get("visited").get == "yes")
+            }
+          }
         }
       }
     }
   }
+}
 
-  class LocalState(var called: Boolean) extends Actor {
-    override def receive: Receive = {
-      case a@_ => {
-        println(a)
-        called = true
-      }
+class LocalState(var called: Boolean) extends Actor {
+  override def receive: Receive = {
+    case EnterState(_, pc) => {
+      pc.parameters += ("visited" -> "yes")
+      println("pc.parameters:" + pc.parameters)
+      sender ! new ExecuteComplete(pc)
+    }
+
+    case a@_ => {
+      println("Event:" + a)
+      called = true
     }
   }
-
 }

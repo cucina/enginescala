@@ -52,7 +52,7 @@ class OperationProcessorSpec
     "receiving single OperationDescriptor" should {
       "return OperationFailed" in {
         val opds = Set[OperationDescriptor]()
-        opds += new OperationDescriptor(Predef.classOf[FailedStub].getName, "failee")
+        opds += new OperationDescriptor(classOf[FailedStub].getName, "failee")
         within(500 millis) {
           actorRef ! new OperationDescriptorsWrap(opds, processContext)
           expectMsgPF() {
@@ -65,8 +65,8 @@ class OperationProcessorSpec
     "receiving duplicate OperationDescriptor" should {
       "return OperationComplete" in {
         val opds = Set[OperationDescriptor]()
-        opds += new OperationDescriptor(Predef.classOf[GoodStub].getName)
-        opds += new OperationDescriptor(Predef.classOf[GoodStub].getName)
+        opds += new OperationDescriptor(classOf[GoodStub].getName)
+        opds += new OperationDescriptor(classOf[GoodStub].getName)
         within(500 millis) {
           actorRef ! new OperationDescriptorsWrap(opds, processContext)
           expectMsg(OperationComplete(processContext))
@@ -76,7 +76,7 @@ class OperationProcessorSpec
   }
 }
 
-class FailedStub(val parameters:Map[String, Object]) extends Actor {
+class FailedStub extends Actor {
   def receive = {
     case OperationRequest(processContext @ _) => {
       sender ! new OperationFailed("Whoops", processContext)
@@ -86,7 +86,7 @@ class FailedStub(val parameters:Map[String, Object]) extends Actor {
   }
 }
 
-class GoodStub(val parameters:Map[String, Object]) extends Actor {
+class GoodStub extends Actor {
   def receive = {
     case OperationRequest(processContext @ _) => {
       sender ! new OperationResponse(processContext)

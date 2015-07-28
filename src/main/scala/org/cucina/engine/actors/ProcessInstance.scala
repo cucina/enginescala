@@ -1,6 +1,7 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.ProcessContext
+import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.ProcessDefinition
 import org.slf4j.LoggerFactory
 import akka.actor._
@@ -14,39 +15,27 @@ import scala.concurrent.duration._
  * @author levinev
  */
 case class ExecuteStart(processContext: ProcessContext, transitionId: String)
+case class ExecuteTransition(processContext: ProcessContext, transitionId: String)
+case class ExecuteComplete(processContext: ProcessContext)
+case class ExecuteFailed(processContext: ProcessContext, failure:String)
 
 class ProcessInstance(processDefinition: ProcessDefinition)
-  extends Actor {
+  extends Actor with ActorFinder {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   val states = Map[String, ActorRef]()
 
-  private def getState(stateD: StateDescriptor) = states getOrElseUpdate(stateD.id,
-    try {
-      implicit val resolveTimeout = Timeout(500 millis)
-      val actorRef = Await.result(context.actorSelection(stateD.id).resolveOne(), resolveTimeout.duration)
-      LOG.info("Located state:" + actorRef)
-      actorRef
-    } catch {
-      case e: ActorNotFound => {
-        val c = context actorOf(StateActor.props(stateD.id, stateD.enterOperations, stateD.leaveOperations, stateD.allTransitions), stateD.id)
-        context watch c
-        LOG.info("created state " + c)
-        c
-      }
-    })
-
-
   def receive = {
     case ExecuteStart(pc, trid) => {
-      println(self)
-      val start = processDefinition.startState
-      LOG.info("before")
-      val sactor = getState(start)
-      sactor ! new EnterState(trid, pc)
-      LOG.info("after")
+      val sactor = findActor(processDefinition.startState, context)
+      sactor forward new EnterState(trid, pc)
     }
 
-    case _ => LOG.info("Unknown")
+    case ExecuteTransition(pc, trid) => {
+      val sactor = findActor(processDefinition.findState(pc.token.stateId), context)
+      sactor forward new LeaveState(trid, pc)
+    }
+
+    case e@_ => LOG.info("Unknown:" + e)
   }
 }
 
