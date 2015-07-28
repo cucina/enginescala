@@ -7,9 +7,8 @@ import scala.concurrent.duration.DurationInt
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.definition.{Token, ProcessDefinition}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
-import akka.actor.{Actor, ActorSystem, Props, actorRef2Scala}
-import akka.testkit.ImplicitSender
-import akka.testkit.TestKit
+import akka.actor.{Actor, ActorSystem, actorRef2Scala}
+import akka.testkit.{ImplicitSender, TestKit}
 import org.cucina.engine.definition.StateDescriptor
 
 

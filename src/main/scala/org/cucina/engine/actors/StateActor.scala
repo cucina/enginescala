@@ -1,13 +1,12 @@
 package org.cucina.engine.actors
 
+import akka.actor.Actor.Receive
 import org.cucina.engine.actors.support.ActorFinder
 
 import scala.collection.mutable.Map
 
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.definition.OperationDescriptor
-import org.cucina.engine.definition.TransitionDescriptor
-import org.cucina.engine.definition.TransitionDescriptor
+import org.cucina.engine.definition.{StackableElementDescriptor, EnterPublisherDescriptor, OperationDescriptor, TransitionDescriptor}
 import org.slf4j.LoggerFactory
 
 import akka.actor.Actor
@@ -19,21 +18,26 @@ import akka.actor.Props
  */
 
 case class EnterState(transitionName: String, processContext: ProcessContext)
+
 case class LeaveState(transitionName: String, processContext: ProcessContext)
 
 class StateActor(name: String,
-                 enterOperations: Iterable[OperationDescriptor],
-                 leaveOperations: Iterable[OperationDescriptor],
+                 enterOperations: Seq[OperationDescriptor],
+                 leaveOperations: Seq[OperationDescriptor],
                  transitions: Iterable[TransitionDescriptor])
   extends Actor with ActorFinder {
   val LOG = LoggerFactory.getLogger(getClass())
+  val enterPublisher = new EnterPublisherDescriptor
+  val leavePublisher = new EnterPublisherDescriptor
+
+  val enterStack: Seq[StackableElementDescriptor] = enterOperations :+ enterPublisher
+  val leaveStack: Seq[StackableElementDescriptor] = leaveOperations :+ leavePublisher
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   def receive = {
     case EnterState(tr, pc) => {
       pc.token.stateId = name
-      fireOperations(enterOperations, pc)
-      publishEnterEvent(name, tr, pc)
+      findActor(enterStack.head, context) ! new StackRequest(pc, enterStack.tail)
     }
 
     case LeaveState(tr, pc) => {
@@ -47,9 +51,10 @@ class StateActor(name: String,
         throw new IllegalArgumentException("Transition cannot be null")
       }
 
-      //tr.checkConditions(pc)
+      //TODO tr.checkConditions(pc)
 
-      fireOperations(leaveOperations, pc)
+      val stack = leaveStack :+ transitions.find(_.name == name).get
+      findActor(stack.head, context) ! new StackRequest(pc, stack.tail)
       trax ! new Occur(pc)
     }
 
@@ -63,14 +68,6 @@ class StateActor(name: String,
 
   private def canLeave(pc: ProcessContext): Boolean = {
     true
-  }
-
-  private def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
-    // TODO call to OperationProcessor - create trait for it
-  }
-
-  private def publishEnterEvent(id: String, from: String, pc: ProcessContext) = {
-    // TODO create trait to publish
   }
 }
 
