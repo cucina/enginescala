@@ -1,12 +1,17 @@
 package org.cucina.engine.definition
 
-import org.cucina.engine.ProcessContext
+import akka.actor.Props
 import org.cucina.engine.actors.StateActor
-import scala.collection.immutable.Set
-import java.lang.Boolean
 
 /**
  * @author levinev
  */
-class StateDescriptor(val className: String = classOf[StateActor].getName, val name: String, val arguments: Seq[Any])
-  extends ProcessElementDescriptor
+case class StateDescriptor(val name: String,
+                           val transitions: Seq[TransitionDescriptor],
+                           val enterOperations: Seq[OperationDescriptor]=Seq.empty,
+                           val leaveOperations: Seq[OperationDescriptor]=Seq.empty,
+                           val className: String = classOf[StateActor].getName)
+  extends ProcessElementDescriptor {
+  def props:Props = Props(Class.forName(className), name, enterOperations, leaveOperations, transitions)
+}
+

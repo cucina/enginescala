@@ -22,11 +22,11 @@ with MockitoSugar {
     "creating EmptyActor" should {
       "return reference" in {
         val wrap = new Wrap
-        val context = mock[ActorContext]
+        implicit val context = mock[ActorContext]
         when(context.actorSelection("empty")).thenThrow(new ActorNotFound(null))
         val ar = mock[ActorRef]
         when(context.actorOf(anyObject[Props], anyString())).thenReturn(ar)
-        val cre = wrap.findActor(new EmptyDescriptor, context)
+        val cre = wrap.findActor(new EmptyDescriptor)
         assert(cre != null)
       }
       "fail for invalid arguments" in {
@@ -48,7 +48,7 @@ with MockitoSugar {
 
   class EmptyDescriptor extends ProcessElementDescriptor {
     override val className: String = classOf[EmptyActor].getName
-    override val arguments: Seq[Any] = Array[Any]("ana", 2)
+    val arguments: Seq[Any] = Array[Any]("ana", 2)
     override val name: String = "empty"
   }
 

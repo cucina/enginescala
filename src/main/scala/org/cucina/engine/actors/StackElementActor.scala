@@ -16,14 +16,21 @@ case class StackRequest(processContext: ProcessContext, stack: Seq[StackableElem
 
 case class StackElementExecuteResult(success: Boolean, processContext: ProcessContext = null, message: String = null, trowable: Throwable = null)
 
-trait StackElementActor extends ActorFinder {
+trait StackElementActor extends Actor with ActorFinder {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
+
+  def receive = receiveStack orElse receiveLocal
+
+  def receiveLocal: Receive = {
+    case a@_ => LOG.info("Not handling " + a + " implementing class should override receiveLocal to handle specific cases")
+  }
 
   def receiveStack(implicit context: ActorContext): Receive = {
     case StackRequest(pc, stack) => {
       execute(pc)
       if (!stack.isEmpty)
-        findActor(stack.head, context) ! new StackRequest(pc, stack.tail)
+        findActor(stack.head) ! new StackRequest(pc, stack.tail)
+      else pc.client ! new ExecuteComplete(pc)
     }
     case e@_ => LOG.debug("Unhandled " + e)
   }

@@ -15,8 +15,8 @@ import scala.concurrent.Await
 trait ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
-  def findActor(elementDescriptor: ProcessElementDescriptor, context: ActorContext): ActorRef = {
-    if (elementDescriptor.name == null) create(elementDescriptor, context)
+  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
+    if (elementDescriptor.name == null) createActor(elementDescriptor)
     else {
       try {
         implicit val resolveTimeout = Timeout(500 millis)
@@ -25,18 +25,19 @@ trait ActorFinder {
         actorRef
       } catch {
         case e: ActorNotFound => {
-          create(elementDescriptor, context)
+          createActor(elementDescriptor)
         }
       }
     }
   }
 
-  private def create(elementDescriptor: ProcessElementDescriptor, context: ActorContext): ActorRef = {
+  def createActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
     val props = propsBuild(elementDescriptor)
     LOG.info("Props:" + props)
     val c = if (elementDescriptor.name == null) context actorOf props else context actorOf(props, elementDescriptor.name)
     require(c != null, "ActorRef cannot be null")
     context watch c
+    LOG.info("Create actor:" + c)
     c
   }
 
@@ -44,9 +45,17 @@ trait ActorFinder {
     try {
       def clazz = Class.forName(elementDescriptor.className)
       LOG.info("Clazz:" + clazz)
-      val args = elementDescriptor.arguments.toArray
-      LOG.info("args:" + args.array)
-      Props(clazz, args: _*)
+/*
+      if (elementDescriptor.arguments != null) {
+        LOG.info("args:" + elementDescriptor.arguments)
+        Props(clazz, elementDescriptor.arguments: _*)
+      } else {
+*/
+        if (elementDescriptor.name != null)
+          Props(clazz, elementDescriptor.name)
+        else
+          Props(clazz)
+//      }
     } catch {
       case e: Throwable => {
         LOG.warn("Failed to create an actor:", e)

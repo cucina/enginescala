@@ -18,7 +18,7 @@ case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescrip
 
 case class CheckFailed(checkName: String, reason: String)
 
-class TransitionActor(name: String, output: StateDescriptor, leaveOperations: Iterable[OperationDescriptor], checks: Seq[CheckDescriptor])
+class TransitionActor(name: String, output: StateDescriptor, leaveOperations: Seq[OperationDescriptor], checks: Seq[CheckDescriptor])
   extends Actor with ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
@@ -28,10 +28,10 @@ class TransitionActor(name: String, output: StateDescriptor, leaveOperations: It
       runChecks(pc, checks)
     }
     case CheckPassed(pc, re) => runChecks(pc, re)
-    case CheckFailed(cn, reason) => {
+    case CheckFailed(cn, reason) =>
       LOG.info("Failed check :" + cn + " due to " + reason)
       // TODO anything else to remain in the current state?
-    }
+
     case e@_ => LOG.debug("Unknown event:" + e)
   }
 
@@ -49,9 +49,9 @@ class TransitionActor(name: String, output: StateDescriptor, leaveOperations: It
     if (chex.isEmpty) {
       fireOperations(leaveOperations, pc)
       publishLeaveEvent(name, pc)
-      findActor(output, context) ! new EnterState(name, pc)
+      findActor(output) ! new EnterState(name, pc)
     } else
-      findActor(chex.head, context) ! new CheckRequest(pc, chex.tail)
+      findActor(chex.head) ! new CheckRequest(pc, chex.tail)
   }
 
 }

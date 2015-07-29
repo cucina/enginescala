@@ -1,32 +1,30 @@
 package org.cucina.engine.actors
 
-import akka.actor.Actor.Receive
-
+import akka.actor.{ Actor, ActorSystem, actorRef2Scala }
+import akka.testkit.{ ImplicitSender, TestKit }
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{ BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike }
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
+import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.definition.{Token, ProcessDefinition}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
-import akka.actor.{Actor, ActorSystem, actorRef2Scala}
-import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.definition.StateDescriptor
-
 
 /**
  * @author levinev
  */
 class ProcessInstanceSpec extends TestKit(ActorSystem("cucina-test"))
-with ImplicitSender
-with WordSpecLike
-with Matchers
-with BeforeAndAfterAll
-with BeforeAndAfter {
+    with ImplicitSender
+    with WordSpecLike
+    with Matchers
+    with BeforeAndAfterAll
+    with BeforeAndAfter
+    with MockitoSugar {
   var called: Boolean = false
-  val state = new StateDescriptor(classOf[LocalState].getName, "start", called :: Nil)
+  val state = new StateDescriptor("start", List(mock[TransitionDescriptor]), className = classOf[LocalState].getName)
   val definition = new ProcessDefinition(state, "xxx", "xx")
   val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), null)
 
-  override def afterAll {
+  override def afterAll = {
     TestKit.shutdownActorSystem(system)
   }
 
@@ -57,7 +55,7 @@ with BeforeAndAfter {
           val defin = new ProcessDefinition(state, "aaa", "xx")
           val local = system.actorOf(ProcessInstance.props(defin), "test_local")
           local ! new ExecuteStart(processContext, "one")
-          expectMsgPF()  {
+          expectMsgPF() {
             case ExecuteComplete(pc) => {
               println(pc.parameters)
               assert(pc.parameters.get("visited").get == "yes")
@@ -77,7 +75,7 @@ class LocalState(var called: Boolean) extends Actor {
       sender ! new ExecuteComplete(pc)
     }
 
-    case a@_ => {
+    case a @ _ => {
       println("Event:" + a)
       called = true
     }

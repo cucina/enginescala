@@ -28,6 +28,7 @@ class StateActor(name: String,
   extends Actor with ActorFinder {
   val LOG = LoggerFactory.getLogger(getClass())
   val enterPublisher = new EnterPublisherDescriptor
+  // TODO create leavePublisher
   val leavePublisher = new EnterPublisherDescriptor
 
   val enterStack: Seq[StackableElementDescriptor] = enterOperations :+ enterPublisher
@@ -37,7 +38,9 @@ class StateActor(name: String,
   def receive = {
     case EnterState(tr, pc) => {
       pc.token.stateId = name
-      findActor(enterStack.head, context) ! new StackRequest(pc, enterStack.tail)
+      LOG.info("stateId=" + name)
+      LOG.info("Calling " + enterStack.head)
+      findActor(enterStack.head) ! new StackRequest(pc, enterStack.tail)
     }
 
     case LeaveState(tr, pc) => {
@@ -54,7 +57,7 @@ class StateActor(name: String,
       //TODO tr.checkConditions(pc)
 
       val stack = leaveStack :+ transitions.find(_.name == name).get
-      findActor(stack.head, context) ! new StackRequest(pc, stack.tail)
+      findActor(stack.head) ! new StackRequest(pc, stack.tail)
       trax ! new Occur(pc)
     }
 
@@ -63,16 +66,17 @@ class StateActor(name: String,
 
   private def buildTransition(name: String): ActorRef = {
     val transitionDescriptor = transitions.find(_.name == name).get
-    findActor(transitionDescriptor, context)
+    findActor(transitionDescriptor)
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {
-    true
+    pc.token.stateId == name
   }
 }
 
 object StateActor {
-  def props(id: String, enterOperations: Iterable[OperationDescriptor], leaveOperations: Iterable[OperationDescriptor], transitions: Iterable[TransitionDescriptor]): Props = {
-    Props(classOf[StateActor], id, enterOperations, leaveOperations, transitions)
+  def props(name: String, enterOperations: Iterable[OperationDescriptor],
+            leaveOperations: Iterable[OperationDescriptor], transitions: Iterable[TransitionDescriptor]): Props = {
+    Props(classOf[StateActor], name, enterOperations, leaveOperations, transitions)
   }
 }

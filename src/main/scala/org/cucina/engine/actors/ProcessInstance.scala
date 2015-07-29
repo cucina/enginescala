@@ -24,14 +24,19 @@ class ProcessInstance(processDefinition: ProcessDefinition)
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   val states = Map[String, ActorRef]()
 
+  for(sd <- processDefinition.getAllStates()) {
+    states += sd.name -> findActor(sd)
+
+  }
+
   def receive = {
     case ExecuteStart(pc, trid) => {
-      val sactor = findActor(processDefinition.startState, context)
+      val sactor = findActor(processDefinition.startState)
       sactor forward new EnterState(trid, pc)
     }
 
     case ExecuteTransition(pc, trid) => {
-      val sactor = findActor(processDefinition.findState(pc.token.stateId), context)
+      val sactor = findActor(processDefinition.findState(pc.token.stateId))
       sactor forward new LeaveState(trid, pc)
     }
 
