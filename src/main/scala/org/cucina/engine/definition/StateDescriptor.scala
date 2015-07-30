@@ -8,10 +8,10 @@ import org.cucina.engine.actors.StateActor
  */
 case class StateDescriptor(val name: String,
                            val transitions: Seq[TransitionDescriptor],
-                           val enterOperations: Seq[OperationDescriptor]=Seq.empty,
-                           val leaveOperations: Seq[OperationDescriptor]=Seq.empty,
+                           val enterOperations: Seq[OperationDescriptor]=Nil,
+                           val leaveOperations: Seq[OperationDescriptor]=Nil,
                            val className: String = classOf[StateActor].getName)
   extends ProcessElementDescriptor {
-  def props:Props = Props(Class.forName(className), name, enterOperations, leaveOperations, transitions)
+  def props:Props = Props(Class.forName(className), name, transitions, enterOperations, leaveOperations)
 }
 

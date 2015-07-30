@@ -22,7 +22,6 @@ class StateDescriptorSpec
     with Matchers
     with BeforeAndAfterAll
     with BeforeAndAfter
-    with ActorFinder 
     with MockitoSugar {
   override def afterAll {
     TestKit.shutdownActorSystem(system)

@@ -14,7 +14,7 @@ import scala.collection.mutable.Map
  * @see State
  * @see Transition
  */
-class ProcessDefinition(val startState:StateDescriptor, description:String, val id:String) {
+class ProcessDefinition(val startState:String, description:String, val id:String) {
   private[this] val states: Map[String, StateDescriptor] = new HashMap[String, StateDescriptor]
 
   /**
@@ -55,33 +55,4 @@ class ProcessDefinition(val startState:StateDescriptor, description:String, val 
   private def registerState(state: StateDescriptor) = {
     states.put(state.name, state)
   }
-
-  /*private void readObject(java.io.ObjectInputStream in)
-        throws IOException, ClassNotFoundException {
-        id = (String) in.readObject()
-
-        ProcessDefinitionRegistry registry = DefaultProcessEnvironment.instance()
-                                                                      .getDefinitionRegistry()
-
-        Assert.notNull(registry, "Failed to find workflowDefinitionRegistry in application context")
-
-        ProcessDefinition wfd = registry.findWorkflowDefinition(id)
-
-        Assert.notNull(wfd, "Failed to find workflow with id:'" + id + "'")
-        startState = wfd.getStartState()
-        setAllPlaces(wfd.getAllPlaces())
-    }
-
-    private void writeObject(ObjectOutputStream os)
-        throws IOException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Serializing...")
-        }
-
-        os.writeObject(id)
-
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Finished.")
-        }
-    }*/
 }

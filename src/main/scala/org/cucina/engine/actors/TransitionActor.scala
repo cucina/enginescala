@@ -1,13 +1,12 @@
 package org.cucina.engine.actors
 
+import akka.util.Timeout
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.{CheckDescriptor, StateDescriptor, OperationDescriptor}
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.actorRef2Scala
-import akka.actor.Props
+import akka.actor._
 import org.slf4j.LoggerFactory
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
  * @author levinev
@@ -18,42 +17,28 @@ case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescrip
 
 case class CheckFailed(checkName: String, reason: String)
 
-class TransitionActor(name: String, output: StateDescriptor, leaveOperations: Seq[OperationDescriptor], checks: Seq[CheckDescriptor])
-  extends Actor with ActorFinder {
+class TransitionActor(name: String, output: String, leaveOperations: Seq[OperationDescriptor], checks: Seq[CheckDescriptor])
+  extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
-
+  var outputState:ActorRef = _
   def receive = {
+    case Init =>
+      try {
+        implicit val resolveTimeout = Timeout(500 millis)
+        outputState = Await.result(context.actorSelection("../../" + output).resolveOne(), resolveTimeout.duration)
+        LOG.info("Located output state:" + outputState)
+      } catch {
+        case e: ActorNotFound => {
+          LOG.error("Failed to find output state @ " + "../../" + output)
+        }
+      }
     case Occur(pc) => {
+      // TODO build stack and execute it
       pc.token.stateId = null
-      runChecks(pc, checks)
     }
-    case CheckPassed(pc, re) => runChecks(pc, re)
-    case CheckFailed(cn, reason) =>
-      LOG.info("Failed check :" + cn + " due to " + reason)
-      // TODO anything else to remain in the current state?
 
     case e@_ => LOG.debug("Unknown event:" + e)
   }
-
-  def fireOperations(ops: Iterable[OperationDescriptor], pc: ProcessContext) = {
-    for (lo <- ops) {
-      // TODO pull the trait
-    }
-  }
-
-  def publishLeaveEvent(id: String, processontext: ProcessContext) = {
-    // TODO pull trait
-  }
-
-  private def runChecks(pc: ProcessContext, chex: Seq[CheckDescriptor]): Unit = {
-    if (chex.isEmpty) {
-      fireOperations(leaveOperations, pc)
-      publishLeaveEvent(name, pc)
-      findActor(output) ! new EnterState(name, pc)
-    } else
-      findActor(chex.head) ! new CheckRequest(pc, chex.tail)
-  }
-
 }
 
 object TransitionActor {

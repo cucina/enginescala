@@ -16,8 +16,10 @@ trait ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
-    if (elementDescriptor.name == null) createActor(elementDescriptor)
-    else {
+    if (elementDescriptor.name == null) {
+      LOG.warn("Cannot find an actor without a name")
+      null
+    } else {
       try {
         implicit val resolveTimeout = Timeout(500 millis)
         val actorRef = Await.result(context.actorSelection(elementDescriptor.name).resolveOne(), resolveTimeout.duration)
@@ -25,7 +27,8 @@ trait ActorFinder {
         actorRef
       } catch {
         case e: ActorNotFound => {
-          createActor(elementDescriptor)
+          LOG.warn("Failed to find actor by name '" + elementDescriptor.name + "'")
+          null
         }
       }
     }

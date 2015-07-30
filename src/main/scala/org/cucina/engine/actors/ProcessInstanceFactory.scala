@@ -1,32 +1,52 @@
 package org.cucina.engine.actors
 
+import org.cucina.engine.definition.ProcessDefinition
+import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.Map
 import org.cucina.engine.ProcessContext
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import org.cucina.engine.definition.ProcessDefinition
+import akka.actor.{Terminated, Actor, ActorRef, Props}
+
 
 /**
  * @author levinev
  */
-case class StartInstance(processname: String, processContext: ProcessContext, transitionId: String)
+case class StartInstance(processname: String, processContext: ProcessContext, transitionId: String = null)
 
-class ProcessInstanceFactory extends Actor {
-  val processRegistry = context.actorOf(Props[DefinitionRegistry])
+case class MoveInstance(processname: String, processContext: ProcessContext, transitionId: String)
+
+case class ProcessDefinitionWrap(processDefinition: ProcessDefinition, nested: Object)
+
+
+class ProcessInstanceFactory(val processRegistry: ActorRef) extends Actor {
+  private[this] val LOG = LoggerFactory.getLogger(getClass)
   val instances: Map[String, ActorRef] = Map[String, ActorRef]()
+
   def receive = {
-    case si @ StartInstance(processName, processContext, transitionId) => processRegistry ! FindDefinition(processName, si)
+    case si@StartInstance(processName, _, _) => processRegistry ! FindDefinition(processName, si)
 
     case ProcessDefinitionWrap(pd, si) => {
-      si match {
-        case StartInstance(_, processContext, transitionId) => {
-          // ProcessInstance should be a root of it own actors
-          def target: ActorRef = instances.getOrElseUpdate(pd.id, context.system.actorOf(ProcessInstance.props(pd)))
-          target ! new ExecuteStart(processContext, transitionId)
+      if (pd != null)
+        si match {
+          case StartInstance(_, processContext, transitionId) => {
+            // ProcessInstance should be a root of it own actors
+            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(ProcessInstance.props(pd)))
+            context watch target
+            target ! new ExecuteStart(processContext, transitionId)
+          }
+          case MoveInstance(_, processContext, transitionId) => {
+            // ProcessInstance should be a root of it own actors
+            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(ProcessInstance.props(pd)))
+            context watch target
+            target ! new ExecuteStart(processContext, transitionId)
+          }
         }
-      }
     }
-    case _ =>
+    case Terminated(child) =>
+      // remove dead reference to re-create upon next request
+      LOG.info("ProcessInstance " + child + " had died")
+      instances.retain((k, v) => v != child)
+
+    case e@_ => LOG.debug("Not handling " + e)
   }
 }

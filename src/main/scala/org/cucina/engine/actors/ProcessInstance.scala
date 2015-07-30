@@ -1,46 +1,58 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.ProcessDefinition
 import org.slf4j.LoggerFactory
 import akka.actor._
 import scala.collection.mutable.Map
-import org.cucina.engine.definition.StateDescriptor
-import scala.concurrent.Await
-import akka.util.Timeout
-import scala.concurrent.duration._
 
 /**
  * @author levinev
  */
 case class ExecuteStart(processContext: ProcessContext, transitionId: String)
+
 case class ExecuteTransition(processContext: ProcessContext, transitionId: String)
+
 case class ExecuteComplete(processContext: ProcessContext)
-case class ExecuteFailed(processContext: ProcessContext, failure:String)
+
+case class ExecuteFailed(processContext: ProcessContext, failure: String)
+
+case object Init
 
 class ProcessInstance(processDefinition: ProcessDefinition)
-  extends Actor with ActorFinder {
+  extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   val states = Map[String, ActorRef]()
 
-  for(sd <- processDefinition.getAllStates()) {
-    states += sd.name -> findActor(sd)
+  for (sd <- processDefinition.getAllStates()) {
+    val p = sd.props
+    LOG.info("Building state from these " + p)
+    states += sd.name -> context.actorOf(p, sd.name)
+  }
 
+  for (ar <- states.values) {
+    ar ! Init
   }
 
   def receive = {
     case ExecuteStart(pc, trid) => {
-      val sactor = findActor(processDefinition.startState)
-      sactor forward new EnterState(trid, pc)
+      findState(processDefinition.startState) forward new EnterState(trid, pc)
     }
 
     case ExecuteTransition(pc, trid) => {
-      val sactor = findActor(processDefinition.findState(pc.token.stateId))
-      sactor forward new LeaveState(trid, pc)
+      findState(pc.token.stateId) forward new LeaveState(trid, pc)
     }
 
     case e@_ => LOG.info("Unknown:" + e)
+  }
+
+  private def findState(name: String): ActorRef = {
+    val ar = states.get(name)
+    if (None == ar) {
+      LOG.error("Failed to find state '" + name + "'")
+      throw new IllegalArgumentException("Failed to find state '" + name + "'")
+    }
+    ar.get
   }
 }
 

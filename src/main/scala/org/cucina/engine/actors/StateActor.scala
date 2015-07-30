@@ -22,9 +22,9 @@ case class EnterState(transitionName: String, processContext: ProcessContext)
 case class LeaveState(transitionName: String, processContext: ProcessContext)
 
 class StateActor(name: String,
-                 enterOperations: Seq[OperationDescriptor],
-                 leaveOperations: Seq[OperationDescriptor],
-                 transitions: Iterable[TransitionDescriptor])
+                 transitions: Iterable[TransitionDescriptor],
+                 enterOperations: Seq[OperationDescriptor] = Nil,
+                 leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
   val LOG = LoggerFactory.getLogger(getClass())
   val enterPublisher = new EnterPublisherDescriptor
@@ -36,14 +36,20 @@ class StateActor(name: String,
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   def receive = {
-    case EnterState(tr, pc) => {
+    case Init =>
+      for(td <- transitions) {
+        val trax = context.actorOf(td.props, td.name)
+        transitionActors += td.name -> trax
+        trax ! Init
+      }
+
+    case EnterState(tr, pc) =>
       pc.token.stateId = name
       LOG.info("stateId=" + name)
       LOG.info("Calling " + enterStack.head)
       findActor(enterStack.head) ! new StackRequest(pc, enterStack.tail)
-    }
 
-    case LeaveState(tr, pc) => {
+    case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {
         throw new IllegalArgumentException("Cannot leave current Place '" + name +
           "' since it is not the active place associated with the supplied ExecutionContext")
@@ -59,7 +65,6 @@ class StateActor(name: String,
       val stack = leaveStack :+ transitions.find(_.name == name).get
       findActor(stack.head) ! new StackRequest(pc, stack.tail)
       trax ! new Occur(pc)
-    }
 
     case _ =>
   }
