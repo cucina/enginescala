@@ -9,9 +9,7 @@ import org.cucina.engine.ProcessContext
 import org.cucina.engine.definition.{StackableElementDescriptor, EnterPublisherDescriptor, OperationDescriptor, TransitionDescriptor}
 import org.slf4j.LoggerFactory
 
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
+import akka.actor.{Terminated, Actor, ActorRef, Props}
 
 /**
  * @author levinev
@@ -35,14 +33,13 @@ class StateActor(name: String,
   val leaveStack: Seq[StackableElementDescriptor] = leaveOperations :+ leavePublisher
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
-  def receive = {
-    case Init =>
-      for(td <- transitions) {
-        val trax = context.actorOf(td.props, td.name)
-        transitionActors += td.name -> trax
-        trax ! Init
-      }
+  override def preStart() = {
+    for (td <- transitions) {
+      createTransition(td)
+    }
+  }
 
+  def receive = {
     case EnterState(tr, pc) =>
       pc.token.stateId = name
       LOG.info("stateId=" + name)
@@ -55,7 +52,7 @@ class StateActor(name: String,
           "' since it is not the active place associated with the supplied ExecutionContext")
       }
 
-      val trax = transitionActors.getOrElseUpdate(tr, buildTransition(tr))
+      val trax = transitionActors.getOrElseUpdate(tr, buildTransitionOrElse(tr, createTransition(tr)))
       if (trax == null) {
         throw new IllegalArgumentException("Transition cannot be null")
       }
@@ -65,13 +62,33 @@ class StateActor(name: String,
       val stack = leaveStack :+ transitions.find(_.name == name).get
       findActor(stack.head) ! new StackRequest(pc, stack.tail)
       trax ! new Occur(pc)
-
+    case Terminated(child) =>
+      LOG.warn("A child is dead:" + child)
+    // TODO handle and revive
     case _ =>
   }
 
-  private def buildTransition(name: String): ActorRef = {
+  private def buildTransitionOrElse(name: String, op: => ActorRef): ActorRef = {
     val transitionDescriptor = transitions.find(_.name == name).get
-    findActor(transitionDescriptor)
+    val a = findActor(transitionDescriptor)
+    if (a == null) op
+    else a
+  }
+
+  private def createTransition(name: String): ActorRef = {
+    val td = transitions.find((td) => {
+      td.name == name
+    }).get
+    createTransition(td)
+  }
+
+  private def createTransition(td: TransitionDescriptor): ActorRef = {
+    // early fail prevention
+    require(td.name != null || td.name.length > 0, "transition name should not be null or empty")
+    val trax = context.actorOf(td.props, td.name)
+    context watch trax
+    transitionActors += td.name -> trax
+    trax
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {

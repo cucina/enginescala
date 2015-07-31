@@ -1,14 +1,13 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.definition.Token
-import org.cucina.engine.definition.ProcessDefinition
 import org.cucina.engine.repository._
 import org.slf4j.LoggerFactory
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.actor.ActorRef
-import org.cucina.engine.{SignalFailedException, ProcessContext, ProcessSession}
+import org.cucina.engine.{SignalFailedException, ProcessContext}
 
 trait TokenRequest {
   val processDefinitionName: String

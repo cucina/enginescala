@@ -1,15 +1,12 @@
 package org.cucina.engine.definition
 
-import org.cucina.engine.actors.StateActor
-import org.cucina.engine.actors.support.ActorFinder
 import org.scalatest.BeforeAndAfter
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Matchers
 import org.scalatest.WordSpecLike
-import akka.actor.{Props, ActorSystem, ActorContext}
+import akka.actor.{ ActorSystem}
 import akka.testkit.ImplicitSender
 import akka.testkit.TestKit
-import org.cucina.engine.actors.support.ActorFinder
 import org.scalatest.mock.MockitoSugar
 
 /**

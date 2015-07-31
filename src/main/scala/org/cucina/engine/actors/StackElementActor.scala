@@ -29,7 +29,7 @@ trait StackElementActor extends Actor with ActorFinder {
     case StackRequest(pc, stack) => {
       execute(pc)
       if (!stack.isEmpty)
-        findActor(stack.head) ! new StackRequest(pc, stack.tail)
+        findActor(stack.head.name) ! new StackRequest(pc, stack.tail)
       else pc.client ! new ExecuteComplete(pc)
     }
     case e@_ => LOG.debug("Unhandled " + e)

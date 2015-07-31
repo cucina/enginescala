@@ -17,8 +17,6 @@ case class ExecuteComplete(processContext: ProcessContext)
 
 case class ExecuteFailed(processContext: ProcessContext, failure: String)
 
-case object Init
-
 class ProcessInstance(processDefinition: ProcessDefinition)
   extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
@@ -28,10 +26,6 @@ class ProcessInstance(processDefinition: ProcessDefinition)
     val p = sd.props
     LOG.info("Building state from these " + p)
     states += sd.name -> context.actorOf(p, sd.name)
-  }
-
-  for (ar <- states.values) {
-    ar ! Init
   }
 
   def receive = {

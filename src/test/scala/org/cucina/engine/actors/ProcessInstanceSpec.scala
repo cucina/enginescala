@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import akka.actor.{Actor, ActorSystem, actorRef2Scala}
+import akka.actor.{Actor, Props, ActorSystem, actorRef2Scala}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -8,6 +8,7 @@ import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 import org.cucina.engine.definition._
 import org.cucina.engine.ProcessContext
+import org.mockito.Mockito._
 
 /**
  * @author levinev
@@ -20,10 +21,11 @@ with BeforeAndAfterAll
 with BeforeAndAfter
 with MockitoSugar {
   var called: Boolean = false
-  val mockstate = new StateDescriptor("start", List(mock[TransitionDescriptor]), className = classOf[LocalState].getName)
+  val mocktd = new TransitionDescriptor("trand", "land", className = classOf[MockTransitionActor].getName)
+  val mockstate = new StateDescriptor("start", List(mocktd), className = classOf[LocalState].getName)
   val definition = new ProcessDefinition("start", "xxx", "xx")
   definition.setAllStates(Array(mockstate))
-  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), null)
+  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), self)
 
   override def afterAll = {
     TestKit.shutdownActorSystem(system)
@@ -78,7 +80,8 @@ with MockitoSugar {
 
 class LocalState(name: String, transitions: Iterable[TransitionDescriptor],
                  enterOperations: Seq[OperationDescriptor],
-                 leaveOperations: Seq[OperationDescriptor]) extends StateActor(name, transitions, enterOperations, leaveOperations) {
+                 leaveOperations: Seq[OperationDescriptor])
+  extends StateActor(name, transitions, enterOperations, leaveOperations) {
   override def receive: Receive = {
     case EnterState(_, pc) => {
       pc.parameters += ("visited" -> "yes")
@@ -92,3 +95,10 @@ class LocalState(name: String, transitions: Iterable[TransitionDescriptor],
     }
   }
 }
+
+class MockTransitionActor(name: String, output: String, ops: Seq[OperationDescriptor], cx: Seq[CheckDescriptor]) extends Actor {
+  def receive = {
+    case e@_ => println("mocktr:" + e)
+  }
+}
+

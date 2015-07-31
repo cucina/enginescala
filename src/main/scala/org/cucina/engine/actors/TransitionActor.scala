@@ -17,21 +17,27 @@ case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescrip
 
 case class CheckFailed(checkName: String, reason: String)
 
-class TransitionActor(name: String, output: String, leaveOperations: Seq[OperationDescriptor], checks: Seq[CheckDescriptor])
+class TransitionActor(name: String, output: String,
+                      leaveOperations: Seq[OperationDescriptor]= List(),
+                      checks: Seq[CheckDescriptor] = List())
   extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
-  var outputState:ActorRef = _
-  def receive = {
-    case Init =>
-      try {
-        implicit val resolveTimeout = Timeout(500 millis)
-        outputState = Await.result(context.actorSelection("../../" + output).resolveOne(), resolveTimeout.duration)
-        LOG.info("Located output state:" + outputState)
-      } catch {
-        case e: ActorNotFound => {
-          LOG.error("Failed to find output state @ " + "../../" + output)
-        }
+  var outputState: ActorRef = _
+
+  override def preStart() = {
+    try {
+      implicit val resolveTimeout = Timeout(500 millis)
+      outputState = Await.result(context.actorSelection("../../" + output).resolveOne(), resolveTimeout.duration)
+      LOG.info("Located output state:" + outputState)
+    } catch {
+      case e: ActorNotFound => {
+        LOG.error("Failed to find output state @ " + "../../" + output)
+        self ! PoisonPill
       }
+    }
+  }
+
+  def receive = {
     case Occur(pc) => {
       // TODO build stack and execute it
       pc.token.stateId = null
@@ -42,7 +48,7 @@ class TransitionActor(name: String, output: String, leaveOperations: Seq[Operati
 }
 
 object TransitionActor {
-  def props(id: String, output: StateDescriptor, leaveOperations: Iterable[OperationDescriptor]): Props = {
-    Props(classOf[TransitionActor], id, output, leaveOperations)
+  def props(id: String, output: String, leaveOperations: Seq[OperationDescriptor] , checks: Seq[CheckDescriptor]): Props = {
+    Props(classOf[TransitionActor], id, output, leaveOperations, checks)
   }
 }

@@ -1,8 +1,11 @@
 package org.cucina.engine
 
-import akka.actor.{Terminated, Props, Actor}
+import akka.actor.{ActorRef, Terminated, Props, Actor}
 import org.cucina.engine.actors._
+import org.cucina.engine.definition.Token
 import org.slf4j.LoggerFactory
+
+
 
 /**
  * Created by levinev on 30/07/2015.
@@ -12,10 +15,13 @@ case class StartProcess(processDefinitionName: String, domainObject: Object, tra
 // the main call for an existing process
 case class MakeTransition(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object])
 
+case class ProcessContext(val token: Token, val parameters: scala.collection.mutable.Map[String, Object], val client:ActorRef)
+
 class ProcessGuardian extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
   private val definitionRegistry = context.actorOf(Props[DefinitionRegistry], "definitionRegistry")
   context watch definitionRegistry
+
   private val processInstanceFactory = context.actorOf(Props(classOf[ProcessInstanceFactory], definitionRegistry), "processInstanceFactory")
   context watch processInstanceFactory
   private val tokenFactory = context.actorOf(Props(classOf[TokenFactory], processInstanceFactory), "tokenFactory")
