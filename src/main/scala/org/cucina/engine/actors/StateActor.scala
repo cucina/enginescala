@@ -24,7 +24,7 @@ class StateActor(name: String,
                  enterOperations: Seq[OperationDescriptor] = Nil,
                  leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
-  val LOG = LoggerFactory.getLogger(getClass())
+  val LOG = LoggerFactory.getLogger(getClass)
   val enterPublisher = new EnterPublisherDescriptor
   // TODO create leavePublisher
   val leavePublisher = new EnterPublisherDescriptor
@@ -34,6 +34,7 @@ class StateActor(name: String,
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   override def preStart() = {
+    context.actorOf(Props(classOf[EnterPublisher]), "enterPublisher")
     for (td <- transitions) {
       createTransition(td)
     }
