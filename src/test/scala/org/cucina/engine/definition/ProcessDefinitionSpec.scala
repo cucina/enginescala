@@ -48,15 +48,18 @@ class ProcessDefinitionSpec
         val definition = new ProcessDefinition(states, "start", "fake", "fake")
 
         object DefinitionProtocol extends DefaultJsonProtocol {
-          implicit val chformat = jsonFormat3(CheckDescriptor.apply _)
-          implicit val opformat = jsonFormat3(OperationDescriptor.apply _)
+          implicit val chformat = jsonFormat3(CheckDescriptor)
+          implicit val opformat = jsonFormat3(OperationDescriptor)
           implicit val traFormat = jsonFormat5(TransitionDescriptor)
           implicit val staFromat = jsonFormat5(StateDescriptor)
           implicit val defFormat = jsonFormat4(ProcessDefinition)
         }
         import DefinitionProtocol._
 
-        println(definition.toJson.prettyPrint)
+        val json = definition.toJson
+        println(json.prettyPrint)
+
+
       }
     }
   }
