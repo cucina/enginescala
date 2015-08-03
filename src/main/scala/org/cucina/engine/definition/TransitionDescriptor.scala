@@ -7,7 +7,7 @@ import org.cucina.engine.actors.TransitionActor
 /**
  * @author levinev
  */
-class TransitionDescriptor(val name: String, output: String,
+case class TransitionDescriptor(val name: String, output: String,
                            leaveOperations: Seq[OperationDescriptor] = List(),
                            checks: Seq[CheckDescriptor] = List(),
                            val className: String = classOf[TransitionActor].getName) extends StackableElementDescriptor {

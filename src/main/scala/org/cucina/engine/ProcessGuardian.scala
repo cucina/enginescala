@@ -6,6 +6,7 @@ import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, Proc
 import org.cucina.engine.definition.reader.FakeDefinitionReader
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable
 
 
 /**
@@ -13,20 +14,19 @@ import org.slf4j.LoggerFactory
  */
 // Transition is optional so is taken only if specified
 case class StartProcess(processDefinitionName: String, domainObject: Object, transitionId: String = null, parameters: Map[String, Object])
+
 // the main call for an existing process
 case class MakeTransition(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object])
 
-case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client:ActorRef)
+case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef)
 
 class ProcessGuardian() extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
   private val definitionRegistry = context.actorOf(Props[DefinitionRegistry], "definitionRegistry")
   context watch definitionRegistry
   // TODO replace with a file and db readers
-  val definition = new ProcessDefinition("start", "fake", "fake")
   val tr1 = new TransitionDescriptor("tr1", "end")
-  val states = Array(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List()))
-  definition.setAllStates(states)
+  val definition = new ProcessDefinition(List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List())), "start", "fake", "fake")
   private val definitionReader = context.actorOf(Props(classOf[FakeDefinitionReader], definitionRegistry, definition), "defReader")
 
   private val processInstanceFactory = context.actorOf(Props(classOf[ProcessInstanceFactory], definitionRegistry), "processInstanceFactory")

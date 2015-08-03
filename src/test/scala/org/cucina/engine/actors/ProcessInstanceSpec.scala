@@ -23,8 +23,7 @@ with MockitoSugar {
   var called: Boolean = false
   val mocktd = new TransitionDescriptor("trand", "land", className = classOf[MockTransitionActor].getName)
   val mockstate = new StateDescriptor("start", List(mocktd), className = classOf[LocalState].getName)
-  val definition = new ProcessDefinition("start", "xxx", "xx")
-  definition.setAllStates(Array(mockstate))
+  val definition = new ProcessDefinition(List(mockstate), "start", "xxx", "xx")
   val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), self)
 
   override def afterAll = {

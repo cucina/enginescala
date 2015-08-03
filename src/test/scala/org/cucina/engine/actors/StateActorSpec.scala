@@ -53,6 +53,6 @@ class Op1 extends Actor with StackElementActor {
   }
 }
 
-class Op1Desc extends OperationDescriptor(className = classOf[Op1].getName, "op1") {
+class Op1Desc extends OperationDescriptor("op1", className = classOf[Op1].getName) {
 
 }

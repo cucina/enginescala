@@ -14,45 +14,18 @@ import scala.collection.mutable.Map
  * @see State
  * @see Transition
  */
-class ProcessDefinition(val startState:String, description:String, val id:String) {
-  private[this] val states: Map[String, StateDescriptor] = new HashMap[String, StateDescriptor]
-
-  /**
-   * JAVADOC.
-   *
-   */
-  def setAllStates(statesArray: Array[StateDescriptor]) = {
-    for (s: StateDescriptor <- statesArray) {
-      registerState(s)
-    }
-  }
-
-  /**
-   * Retrieves all the {@link State} that are part of this
-   * <code>ProcessDefinition</code>.
-   */
-  def getAllStates(): Iterable[StateDescriptor] = {
-    states.values
-  }
+case class ProcessDefinition(val states: List[StateDescriptor], val startState: String, description: String, val id: String) {
 
   /**
    * Finds a {@link State} that is part of this
    * <code>WorkflowDefinition</code> by ID.
    */
   def findState(stateId: String): StateDescriptor = {
-    val place: StateDescriptor = states.get(stateId).get
-
+    val place = states.filter(_.name == stateId ).head
     if (place == null) {
       throw new SignalFailedException("Failed to find state named '" + stateId + "' in workflow '" + id + "'")
     }
 
     place
-  }
-
-  /**
-   * Registers a {@link State} as part of the <code>WorkflowDefinition</code>.
-   */
-  private def registerState(state: StateDescriptor) = {
-    states.put(state.name, state)
   }
 }

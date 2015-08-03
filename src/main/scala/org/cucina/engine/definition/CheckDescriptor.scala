@@ -1,9 +1,10 @@
 package org.cucina.engine.definition
 
 import org.cucina.engine.ProcessContext
+import org.cucina.engine.actors.PassingCheckActor
 
 /**
  * @author levinev
  */
-class CheckDescriptor(val className: String, val name: String = null, val arguments: Seq[Any] = Nil)
-extends StackableElementDescriptor
+case class CheckDescriptor(val name: String, val className: String = classOf[PassingCheckActor].getName, val arguments: List[String] = Nil)
+  extends StackableElementDescriptor

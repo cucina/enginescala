@@ -22,7 +22,7 @@ class ProcessInstance(processDefinition: ProcessDefinition)
   private[this] val LOG = LoggerFactory.getLogger(getClass())
   val states = Map[String, ActorRef]()
 
-  for (sd <- processDefinition.getAllStates()) {
+  for (sd <- processDefinition.states) {
     val p = sd.props
     LOG.info("Building state from these " + p)
     states += sd.name -> context.actorOf(p, sd.name)
