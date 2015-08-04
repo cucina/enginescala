@@ -68,6 +68,11 @@
 			<version>1.10.19</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.spray</groupId>
+			<artifactId>spray-json_2.11</artifactId>
+			<version>1.3.2</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
@@ -106,7 +111,6 @@
 				<configuration>
 					<!-- Skip coloring output on the console -->
 					<stdout>W</stdout>
-					<encoding>UTF-8</encoding>
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<!-- Enable XML reports -->
 					<junitxml>.</junitxml>
