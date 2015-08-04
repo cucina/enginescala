@@ -1,28 +1,15 @@
 package org.cucina.engine.definition
 
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
-import spray.json.DefaultJsonProtocol
-
-import scala.collection.mutable
+import org.scalatest.{Matchers, WordSpecLike}
 
 /**
  * Created by levinev on 03/08/2015.
  */
 class ProcessDefinitionSpec
-  extends TestKit(ActorSystem("cucina-test"))
-  with ImplicitSender
-  with WordSpecLike
+  extends WordSpecLike
   with Matchers
-  with BeforeAndAfterAll
-  with BeforeAndAfter
   with MockitoSugar {
-
-  override def afterAll {
-    TestKit.shutdownActorSystem(system)
-  }
 
   "ProcessDefinitionSpec" when {
     "serialized" should {
@@ -36,10 +23,12 @@ class ProcessDefinitionSpec
         import DefinitionProtocol._
 
         val json = definition.toJson
-        println(json.prettyPrint)
-
-        val defin = json.convertTo[ProcessDefinition]
+        val str = json.compactPrint
+        println(str)
+        val pjson = str.parseJson
+        val defin = pjson.convertTo[ProcessDefinition]
         println(defin)
+        assert("start"== defin.startState)
       }
     }
   }

@@ -9,5 +9,5 @@ class Token(val domainObject: Object, var processDefinition: ProcessDefinition =
   var stateId: String = _
   var children: Set[Token] = Set()
 
-  def hasChildren(): Boolean = children.nonEmpty
+  def hasChildren: Boolean = children.nonEmpty
 }  

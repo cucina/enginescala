@@ -47,6 +47,8 @@ with BeforeAndAfter {
                   } else {
                     assert(in == oldin)
                   }
+                case e@_ =>
+                  fail("Unexpected:" + e)
               }
 
             case a@_ => println("Whopsie:" + a)

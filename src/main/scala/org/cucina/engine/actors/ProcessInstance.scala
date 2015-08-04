@@ -41,12 +41,12 @@ class ProcessInstance(processDefinition: ProcessDefinition)
   }
 
   private def findState(name: String): ActorRef = {
-    val ar = states.get(name)
-    if (None == ar) {
-      LOG.error("Failed to find state '" + name + "'")
-      throw new IllegalArgumentException("Failed to find state '" + name + "'")
+    states.get(name) match {
+      case None =>
+        LOG.error("Failed to find state '" + name + "'")
+        throw new IllegalArgumentException("Failed to find state '" + name + "'")
+      case Some(ar) => ar
     }
-    ar.get
   }
 }
 

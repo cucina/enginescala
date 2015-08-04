@@ -5,5 +5,5 @@ import org.cucina.engine.actors.PassingCheckActor
 /**
  * @author levinev
  */
-case class CheckDescriptor(val name: String, val className: String = classOf[PassingCheckActor].getName, val arguments: List[String] = Nil)
+case class CheckDescriptor(name: String, className: String = classOf[PassingCheckActor].getName, arguments: List[String] = Nil)
   extends StackableElementDescriptor

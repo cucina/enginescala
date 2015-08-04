@@ -31,7 +31,7 @@ case class TokenResult(token: Token, op: TokenRequest)
  * @author levinev
  */
 class TokenFactory(processInstanceFactory: ActorRef) extends Actor {
-  private[this] val LOG = LoggerFactory.getLogger(getClass())
+  private[this] val LOG = LoggerFactory.getLogger(getClass)
 
   lazy val tokenRepository = context.actorOf(Props[TokenRepository], name = "tokenRepository")
 
