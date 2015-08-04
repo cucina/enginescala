@@ -25,9 +25,9 @@ class StateActor(name: String,
                  leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
   val LOG = LoggerFactory.getLogger(getClass)
-  val enterPublisher = new EnterPublisherDescriptor
-  // TODO create leavePublisher
-  val leavePublisher = new EnterPublisherDescriptor
+  // TODO these should be defined globally per process definition
+  val enterPublisher = new EnterPublisherDescriptor(List())
+  val leavePublisher = new EnterPublisherDescriptor(List())
 
   val enterStack: Seq[StackableElementDescriptor] = enterOperations :+ enterPublisher
   val leaveStack: Seq[StackableElementDescriptor] = leaveOperations :+ leavePublisher
@@ -45,7 +45,8 @@ class StateActor(name: String,
       pc.token.stateId = name
       LOG.info("stateId=" + name)
       LOG.info("Calling " + enterStack.head)
-      findActor(enterStack.head) ! new StackRequest(pc, enterStack.tail)
+      // TODO handle None
+      findActor(enterStack.head).get ! new StackRequest(pc, enterStack.tail)
 
     case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {
@@ -61,7 +62,8 @@ class StateActor(name: String,
       //TODO tr.checkConditions(pc)
 
       val stack = leaveStack :+ transitions.find(_.name == name).get
-      findActor(stack.head) ! new StackRequest(pc, stack.tail)
+      // TODO handle None
+      findActor(stack.head).get ! new StackRequest(pc, stack.tail)
       trax ! new Occur(pc)
     case Terminated(child) =>
       LOG.warn("A child is dead:" + child)
@@ -72,11 +74,14 @@ class StateActor(name: String,
   private def buildTransitionOrElse(name: String, op: => ActorRef): ActorRef = {
     val transitionDescriptor = transitions.find(_.name == name).get
     val a = findActor(transitionDescriptor)
-    if (a == null) op
-    else a
+    a match {
+      case None => op
+      case _ => a.get
+    }
   }
 
   private def createTransition(name: String): ActorRef = {
+    // TODO handle None
     val td = transitions.find((td) => {
       td.name == name
     }).get

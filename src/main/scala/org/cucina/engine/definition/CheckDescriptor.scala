@@ -1,6 +1,5 @@
 package org.cucina.engine.definition
 
-import org.cucina.engine.ProcessContext
 import org.cucina.engine.actors.PassingCheckActor
 
 /**

@@ -16,22 +16,23 @@ trait ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   /// recursive search in this context and in its parent/grandparent
-  def findActor(name: String)(implicit context: ActorContext): ActorRef = {
+  def findActor(name: String)(implicit context: ActorContext): Option[ActorRef] = {
     val searchPaths = List(name, "../" + name, "../../" + name)
     search(searchPaths)
   }
 
-  def search(paths: List[String])(implicit context: ActorContext): ActorRef = {
+  def search(paths: List[String])(implicit context: ActorContext): Option[ActorRef] = {
     paths match {
-      case List() => null
+      case List() => None
       case path :: xs =>
-        val ac = searchPath(path)
-        if (ac == null) search(xs)
-        else ac
+        searchPath(path) match {
+          case None => search(xs)
+          case opt => opt
+        }
     }
   }
 
-  private def searchPath(path: String)(implicit context: ActorContext): ActorRef = {
+  private def searchPath(path: String)(implicit context: ActorContext): Option[ActorRef] = {
     LOG.info("Path:" + path)
     try {
       // TODO parameter for timeout?
@@ -40,19 +41,22 @@ trait ActorFinder {
       val ro = ac.resolveOne()
       val actorRef = Await.result(ro, resolveTimeout.duration)
       LOG.info("Located actor:" + actorRef)
-      actorRef
+      actorRef match {
+        case null => None
+        case _ => Some(actorRef)
+      }
     } catch {
       case e: ActorNotFound => {
         LOG.warn("Failed to find actor by name '" + path + "'")
-        null
+        None
       }
     }
   }
 
-  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
+  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): Option[ActorRef] = {
     if (elementDescriptor.name == null) {
       LOG.warn("Cannot find an actor without a name")
-      null
+      None
     } else {
       findActor(elementDescriptor.name)
     }

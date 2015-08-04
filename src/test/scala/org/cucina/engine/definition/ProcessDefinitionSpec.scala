@@ -28,20 +28,6 @@ class ProcessDefinitionSpec
     "serialized" should {
       "produce json" in {
         import spray.json._
-/*
-        case class Color(a: String)
-
-        object MyJsonProtocol extends DefaultJsonProtocol {
-          implicit val colFormat = jsonFormat1(Color)
-        }
-
-        import MyJsonProtocol._
-
-        val color = new Color("red")
-        val json = color.toJson
-
-        println(json.prettyPrint)
-*/
 
         val tr1 = new TransitionDescriptor("tr1", "end")
         val states = List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List()))
@@ -52,7 +38,8 @@ class ProcessDefinitionSpec
         val json = definition.toJson
         println(json.prettyPrint)
 
-
+        val defin = json.convertTo[ProcessDefinition]
+        println(defin)
       }
     }
   }

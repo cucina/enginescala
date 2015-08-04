@@ -16,7 +16,9 @@ case class StackRequest(processContext: ProcessContext, stack: Seq[StackableElem
 
 case class StackElementExecuteResult(success: Boolean, processContext: ProcessContext = null, message: String = null, trowable: Throwable = null)
 
-trait StackElementActor extends Actor with ActorFinder {
+trait StackElementActor
+  extends Actor
+  with ActorFinder {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
 
   def receive = receiveStack orElse receiveLocal
@@ -29,7 +31,8 @@ trait StackElementActor extends Actor with ActorFinder {
     case StackRequest(pc, stack) => {
       execute(pc)
       if (!stack.isEmpty)
-        findActor(stack.head.name) ! new StackRequest(pc, stack.tail)
+        // TODO handle None
+        findActor(stack.head.name).get ! new StackRequest(pc, stack.tail)
       else pc.client ! new ExecuteComplete(pc)
     }
     case e@_ => LOG.debug("Unhandled " + e)
