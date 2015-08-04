@@ -31,12 +31,9 @@ trait StackElementActor
     case StackRequest(pc, stack) => {
       execute(pc)
       if (!stack.isEmpty)
-        // TODO handle None
-
-        findActor(stack.head.name).get ! new StackRequest(pc, stack.tail)
+        findAndSend(stack.head, new StackRequest(pc, stack.tail))
       else pc.client ! new ExecuteComplete(pc)
     }
-    case e@_ => LOG.debug("Unhandled " + e)
   }
 
   def execute(processContext: ProcessContext): StackElementExecuteResult

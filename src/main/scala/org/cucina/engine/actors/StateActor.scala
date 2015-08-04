@@ -1,15 +1,12 @@
 package org.cucina.engine.actors
 
-import akka.actor.Actor.Receive
 import org.cucina.engine.actors.support.ActorFinder
-
-import scala.collection.mutable.Map
 
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.definition._
 import org.slf4j.LoggerFactory
 
-import akka.actor.{Terminated, Actor, ActorRef, Props}
+import akka.actor.{Terminated, Actor, Props}
 
 /**
  * @author levinev
@@ -28,10 +25,8 @@ class StateActor(name: String,
   // TODO these should be defined globally per process definition
   val enterPublisher = new EnterPublisherDescriptor(List())
   val leavePublisher = new LeavePublisherDescriptor(List())
-
   val enterStack: Seq[StackableElementDescriptor] = enterOperations :+ enterPublisher
   val leaveStack: Seq[StackableElementDescriptor] = leaveOperations :+ leavePublisher
-  val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   override def preStart() = {
     context.actorOf(EnterPublisher.props(List()), enterPublisher.name)
@@ -55,41 +50,14 @@ class StateActor(name: String,
           "' since it is not the active place associated with the supplied ExecutionContext")
       }
 
-      val trax = transitionActors.getOrElseUpdate(tr, buildTransitionOrElse(tr, createTransition(tr)))
-      if (trax == null) {
-        throw new IllegalArgumentException("Transition cannot be null")
-      }
-
-      //TODO tr.checkConditions(pc)
-
+      // TODO handle None
       val stack = leaveStack :+ transitions.find(_.name == name).get
       findAndSend(stack.head, new StackRequest(pc, stack.tail))
-      trax ! new Occur(pc)
+
     case Terminated(child) =>
       LOG.warn("A child is dead:" + child)
     // TODO handle and revive
     case _ =>
-  }
-
-  private def buildTransitionOrElse(name: String, op: => ActorRef): ActorRef = {
-    val transitionDescriptor = transitions.find(_.name == name).get
-    val a = findActor(transitionDescriptor)
-    a match {
-      case None => op
-      case _ => a.get
-    }
-  }
-
-  private def createTransition(name: String): ActorRef = {
-    transitions.find((td) => {
-      td.name == name
-    }) match {
-      case None => throw new IllegalArgumentException("No transition '" + name + "' has been defined for the state " + this.name)
-      case Some(td:TransitionDescriptor) =>
-        val trax = createActor(td)
-        transitionActors += td.name -> trax
-        trax
-    }
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {
@@ -98,8 +66,9 @@ class StateActor(name: String,
 }
 
 object StateActor {
-  def props(name: String, enterOperations: Iterable[OperationDescriptor],
-            leaveOperations: Iterable[OperationDescriptor], transitions: Iterable[TransitionDescriptor]): Props = {
-    Props(classOf[StateActor], name, enterOperations, leaveOperations, transitions)
+  def props(name: String, transitions: Iterable[TransitionDescriptor],
+            enterOperations: Seq[OperationDescriptor],
+            leaveOperations: Seq[OperationDescriptor]): Props = {
+    Props(classOf[StateActor], name, transitions, enterOperations, leaveOperations)
   }
 }

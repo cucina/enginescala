@@ -7,6 +7,8 @@ import org.cucina.engine.actors.support.ActorFinder
 /**
  * Created by levinev on 28/07/2015.
  */
+
+// TODO have a single class using a type of event in constructor
 case class EnterEvent(processContext: ProcessContext)
 
 abstract class EventPublisher(val listeners: Seq[String]) extends StackElementActor {
@@ -43,7 +45,7 @@ class LeavePublisher(listeners: Seq[String])
   }
 
   def execute(processContext: ProcessContext): StackElementExecuteResult = {
-    listActors.foreach(l => l ! new EnterEvent(processContext))
+    listActors.foreach(l => l ! new LeaveEvent(processContext))
     new StackElementExecuteResult(true, processContext)
   }
 }

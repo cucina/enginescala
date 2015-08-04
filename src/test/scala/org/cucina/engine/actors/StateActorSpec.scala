@@ -31,7 +31,7 @@ with BeforeAndAfter {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(Props(classOf[StateActor], "state", transitions, enterOperations, leaveOperations))
+          val actorRef = system.actorOf(StateActor.props("state", transitions, enterOperations, leaveOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>

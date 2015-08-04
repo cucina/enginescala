@@ -13,7 +13,7 @@ import scala.concurrent.Await
  * Finds an existing actor from elemntDescriptor or creates a new one
  */
 trait ActorFinder {
-  private val LOG = LoggerFactory.getLogger(getClass)
+  private val LOG = LoggerFactory.getLogger(classOf[ActorFinder])
 
   def findAndSend(name: String, event: Any)(implicit context: ActorContext): Unit = {
     findActor(name) match {
