@@ -12,5 +12,5 @@ case class TransitionDescriptor(val name: String, output: String,
                            checks: Seq[CheckDescriptor] = List(),
                            val className: String = classOf[TransitionActor].getName) extends StackableElementDescriptor {
   /// Factory method, allows to plugin allows to plugin alternative transition implementations
-  def props: Props = Props(Class.forName(className), name, output, leaveOperations, checks)
+  override def props: Props = Props(Class.forName(className), name, output, leaveOperations, checks)
 }

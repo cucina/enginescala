@@ -31,13 +31,13 @@ with BeforeAndAfter {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(Props(classOf[StateActor], "state", enterOperations, leaveOperations, transitions))
+          val actorRef = system.actorOf(Props(classOf[StateActor], "state", transitions, enterOperations, leaveOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
-            case ExecuteComplete(pc) => {
+            case ExecuteComplete(pc) =>
               println(pc.parameters)
               assert("called" == pc.parameters.get("Op1").get)
-            }
+            case a@_ => println("Whopsie:" + a)
           }
         }
       }
@@ -45,8 +45,7 @@ with BeforeAndAfter {
   }
 }
 
-class Op1 extends Actor with StackElementActor {
-
+class Op1 extends StackElementActor {
   def execute(pc: ProcessContext): StackElementExecuteResult = {
     pc.parameters += ("Op1" -> "called")
     new StackElementExecuteResult(true, processContext = pc)
@@ -54,5 +53,5 @@ class Op1 extends Actor with StackElementActor {
 }
 
 class Op1Desc extends OperationDescriptor("op1", className = classOf[Op1].getName) {
-
+  override def props: Props = Props[Op1]
 }

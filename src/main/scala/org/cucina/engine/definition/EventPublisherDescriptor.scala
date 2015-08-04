@@ -9,11 +9,11 @@ import org.cucina.engine.actors.{LeavePublisher, EnterPublisher}
 case class EnterPublisherDescriptor(val listeners: Seq[String],
                                     val name: String = "enterPublisher",
                                     val className: String = classOf[EnterPublisher].getName) extends StackableElementDescriptor {
-  def props = Props(Class.forName(className), listeners)
+  override def props = Props(Class.forName(className), listeners)
 }
 
 case class LeavePublisherDescriptor(val listeners: Seq[String],
                                     val name: String = "leavePublisher",
                                     val className: String = classOf[LeavePublisher].getName) extends StackableElementDescriptor {
-  def props = Props(Class.forName(className), listeners)
+  override  def props = Props(Class.forName(className), listeners)
 }

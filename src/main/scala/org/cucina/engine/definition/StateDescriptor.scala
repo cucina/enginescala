@@ -12,6 +12,6 @@ case class StateDescriptor(name: String,
                            leaveOperations: Seq[OperationDescriptor]=List(),
                            className: String = classOf[StateActor].getName)
   extends ProcessElementDescriptor {
-  def props:Props = Props(Class.forName(className), name, transitions, enterOperations, leaveOperations)
+  override def props:Props = Props(Class.forName(className), name, transitions, enterOperations, leaveOperations)
 }
 

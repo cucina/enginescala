@@ -15,10 +15,33 @@ import scala.concurrent.Await
 trait ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
 
+  def findAndSend(name: String, event: Any)(implicit context: ActorContext): Unit = {
+    findActor(name) match {
+      case None => LOG.info("Failed to find actor named '" + name + "'")
+      case Some(a) => a ! event
+    }
+  }
+
+  def findAndSend(elementDescriptor: ProcessElementDescriptor, event: Any)(implicit context: ActorContext): Unit = {
+    findActor(elementDescriptor) match {
+      case None => LOG.info("Failed to find actor from '" + elementDescriptor + "'")
+      case Some(a) => a ! event
+    }
+  }
+
   /// recursive search in this context and in its parent/grandparent
   def findActor(name: String)(implicit context: ActorContext): Option[ActorRef] = {
     val searchPaths = List(name, "../" + name, "../../" + name)
     search(searchPaths)
+  }
+
+  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): Option[ActorRef] = {
+    if (elementDescriptor.name == null) {
+      LOG.warn("Cannot find an actor without a name")
+      None
+    } else {
+      findActor(elementDescriptor.name)
+    }
   }
 
   def search(paths: List[String])(implicit context: ActorContext): Option[ActorRef] = {
@@ -53,45 +76,13 @@ trait ActorFinder {
     }
   }
 
-  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): Option[ActorRef] = {
-    if (elementDescriptor.name == null) {
-      LOG.warn("Cannot find an actor without a name")
-      None
-    } else {
-      findActor(elementDescriptor.name)
-    }
-  }
-
   def createActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
-    val props = propsBuild(elementDescriptor)
+    val props = elementDescriptor.props
     LOG.info("Props:" + props)
     val c = if (elementDescriptor.name == null) context actorOf props else context actorOf(props, elementDescriptor.name)
     require(c != null, "ActorRef cannot be null")
     context watch c
     LOG.info("Create actor:" + c)
     c
-  }
-
-  private def propsBuild(elementDescriptor: ProcessElementDescriptor): Props = {
-    try {
-      def clazz = Class.forName(elementDescriptor.className)
-      LOG.info("Clazz:" + clazz)
-      /*
-            if (elementDescriptor.arguments != null) {
-              LOG.info("args:" + elementDescriptor.arguments)
-              Props(clazz, elementDescriptor.arguments: _*)
-            } else {
-      */
-      if (elementDescriptor.name != null)
-        Props(clazz, elementDescriptor.name)
-      else
-        Props(clazz)
-      //      }
-    } catch {
-      case e: Throwable => {
-        LOG.warn("Failed to create an actor:", e)
-        throw e
-      }
-    }
   }
 }

@@ -32,6 +32,7 @@ trait StackElementActor
       execute(pc)
       if (!stack.isEmpty)
         // TODO handle None
+
         findActor(stack.head.name).get ! new StackRequest(pc, stack.tail)
       else pc.client ! new ExecuteComplete(pc)
     }

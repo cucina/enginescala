@@ -6,7 +6,7 @@ import org.cucina.engine.actors.support.ActorFinder
 import scala.collection.mutable.Map
 
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.definition.{StackableElementDescriptor, EnterPublisherDescriptor, OperationDescriptor, TransitionDescriptor}
+import org.cucina.engine.definition._
 import org.slf4j.LoggerFactory
 
 import akka.actor.{Terminated, Actor, ActorRef, Props}
@@ -27,26 +27,27 @@ class StateActor(name: String,
   val LOG = LoggerFactory.getLogger(getClass)
   // TODO these should be defined globally per process definition
   val enterPublisher = new EnterPublisherDescriptor(List())
-  val leavePublisher = new EnterPublisherDescriptor(List())
+  val leavePublisher = new LeavePublisherDescriptor(List())
 
   val enterStack: Seq[StackableElementDescriptor] = enterOperations :+ enterPublisher
   val leaveStack: Seq[StackableElementDescriptor] = leaveOperations :+ leavePublisher
   val transitionActors: Map[String, ActorRef] = Map[String, ActorRef]()
 
   override def preStart() = {
-    context.actorOf(Props(classOf[EnterPublisher]), "enterPublisher")
-    for (td <- transitions) {
-      createTransition(td)
-    }
+    context.actorOf(EnterPublisher.props(List()), enterPublisher.name)
+    context.actorOf(LeavePublisher.props(List()), leavePublisher.name)
+
+    transitions.foreach(td => createActor(td))
+    enterOperations.foreach(op => createActor(op))
+    leaveOperations.foreach(op => createActor(op))
   }
 
   def receive = {
     case EnterState(tr, pc) =>
       pc.token.stateId = name
-      LOG.info("stateId=" + name)
+      LOG.info("entering stateId=" + name)
       LOG.info("Calling " + enterStack.head)
-      // TODO handle None
-      findActor(enterStack.head).get ! new StackRequest(pc, enterStack.tail)
+      findAndSend(enterStack.head, new StackRequest(pc, enterStack.tail))
 
     case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {
@@ -62,8 +63,7 @@ class StateActor(name: String,
       //TODO tr.checkConditions(pc)
 
       val stack = leaveStack :+ transitions.find(_.name == name).get
-      // TODO handle None
-      findActor(stack.head).get ! new StackRequest(pc, stack.tail)
+      findAndSend(stack.head, new StackRequest(pc, stack.tail))
       trax ! new Occur(pc)
     case Terminated(child) =>
       LOG.warn("A child is dead:" + child)
@@ -81,20 +81,15 @@ class StateActor(name: String,
   }
 
   private def createTransition(name: String): ActorRef = {
-    // TODO handle None
-    val td = transitions.find((td) => {
+    transitions.find((td) => {
       td.name == name
-    }).get
-    createTransition(td)
-  }
-
-  private def createTransition(td: TransitionDescriptor): ActorRef = {
-    // early fail prevention
-    require(td.name != null || td.name.length > 0, "transition name should not be null or empty")
-    val trax = context.actorOf(td.props, td.name)
-    context watch trax
-    transitionActors += td.name -> trax
-    trax
+    }) match {
+      case None => throw new IllegalArgumentException("No transition '" + name + "' has been defined for the state " + this.name)
+      case Some(td:TransitionDescriptor) =>
+        val trax = createActor(td)
+        transitionActors += td.name -> trax
+        trax
+    }
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {

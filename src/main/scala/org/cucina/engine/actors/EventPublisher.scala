@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import akka.actor.{ActorContext, ActorRef, Actor}
+import akka.actor.{Props, ActorContext, ActorRef, Actor}
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.actors.support.ActorFinder
 
@@ -29,6 +29,10 @@ class EnterPublisher(listeners: Seq[String])
   }
 }
 
+object EnterPublisher {
+  def props(listeners: Seq[String]): Props = Props(classOf[EnterPublisher], listeners)
+}
+
 case class LeaveEvent(processContext: ProcessContext)
 
 class LeavePublisher(listeners: Seq[String])
@@ -42,4 +46,8 @@ class LeavePublisher(listeners: Seq[String])
     listActors.foreach(l => l ! new EnterEvent(processContext))
     new StackElementExecuteResult(true, processContext)
   }
+}
+
+object LeavePublisher {
+  def props(listeners: Seq[String]): Props = Props(classOf[LeavePublisher], listeners)
 }

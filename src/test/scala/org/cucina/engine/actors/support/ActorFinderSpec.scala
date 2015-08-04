@@ -37,7 +37,7 @@ with ImplicitSender {
         val ar = mock[ActorRef]
         when(context.actorOf(anyObject[Props], anyString())).thenReturn(ar)
         val cre = wrap.findActor(new EmptyDescriptor)
-        assert(cre == null)
+        assert(cre == None)
       }
 
       "return actor as a sibling" in {
@@ -55,7 +55,7 @@ with ImplicitSender {
 
         act ! "empty"
         expectMsgPF() {
-          case a: ActorRef =>
+          case Some(a: ActorRef) =>
             println("sibling:" + a)
             assert(a != null)
         }
@@ -75,9 +75,11 @@ with ImplicitSender {
 
         act ! "empty"
         expectMsgPF() {
-          case a: ActorRef =>
+          case Some(a: ActorRef) =>
             println("uncle:" + a)
-            assert(a != null)
+            assert {
+              a != null
+            }
         }
       }
     }

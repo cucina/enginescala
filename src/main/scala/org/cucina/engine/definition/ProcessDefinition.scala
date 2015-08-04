@@ -17,11 +17,10 @@ import scala.collection.mutable.Map
 case class ProcessDefinition(val states: List[StateDescriptor], val startState: String, description: String, val id: String) {
 
   /**
-   * Finds a {@link State} that is part of this
-   * <code>WorkflowDefinition</code> by ID.
+   * Finds a {@link State} that is part of this <code>ProcessDefinition</code> by id.
    */
   def findState(stateId: String): StateDescriptor = {
-    val place = states.filter(_.name == stateId ).head
+    val place = states.filter(_.name == stateId).head
     if (place == null) {
       throw new SignalFailedException("Failed to find state named '" + stateId + "' in workflow '" + id + "'")
     }
