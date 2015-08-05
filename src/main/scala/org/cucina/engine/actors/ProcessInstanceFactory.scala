@@ -27,27 +27,33 @@ class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider:
 
 
   def receive = {
-    case si@StartInstance(processName, _, _) => processRegistry ! FindDefinition(processName, si)
+    case si:StartInstance =>
+      LOG.info("StartInstance " + si)
+      processRegistry ! FindDefinition(si.processname, si)
 
-    case si@MoveInstance(processName, _, _) => processRegistry ! FindDefinition(processName, si)
+    case si:MoveInstance =>
+      LOG.info("MoveInstance " + si)
+      processRegistry ! FindDefinition(si.processname, si)
 
-    case ProcessDefinitionWrap(pd, si) => {
+    case ProcessDefinitionWrap(pd, si) =>
       if (pd != null)
         si match {
           case StartInstance(_, processContext, transitionId) => {
+            LOG.info("Starting instance " + pd)
             // ProcessInstance should be a root of it own actors
             def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(processInstanceProvider.props(pd)))
             context watch target
             target ! new ExecuteStart(processContext, transitionId)
           }
           case MoveInstance(_, processContext, transitionId) => {
+            LOG.info("Existing instance " + pd)
             // ProcessInstance should be a root of it own actors
             def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(processInstanceProvider.props(pd)))
             context watch target
             target ! new ExecuteTransition(processContext, transitionId)
           }
         }
-    }
+
     case Terminated(child) =>
       // remove dead reference to re-create upon next request
       LOG.warn("ProcessInstance " + child + " had died")
@@ -58,5 +64,5 @@ class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider:
 }
 
 object ProcessInstanceFactory {
-  def props(processRegistry: ActorRef): Props = Props(classOf[ProcessInstanceFactory], processRegistry)
+  def props(processRegistry: ActorRef): Props = Props(classOf[ProcessInstanceFactory], processRegistry, null)
 }

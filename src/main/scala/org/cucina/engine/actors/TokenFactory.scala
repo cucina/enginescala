@@ -89,5 +89,5 @@ class TokenFactory(processInstanceFactory: ActorRef, tokenRepository:ActorRef = 
 }
 
 object TokenFactory {
-  def props(processInstanceFactory:ActorRef):Props = Props(classOf[TokenFactory], processInstanceFactory)
+  def props(processInstanceFactory:ActorRef):Props = Props(classOf[TokenFactory], processInstanceFactory, null)
 }

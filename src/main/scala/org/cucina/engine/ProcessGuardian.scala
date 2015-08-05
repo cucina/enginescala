@@ -23,7 +23,8 @@ case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map
 
 case class AddDefinition(string: String)
 
-class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null) extends Actor with DefinitionParser {
+class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
+  extends Actor with DefinitionParser {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
 
   lazy val localDefinitionRegistry = {
@@ -58,18 +59,22 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
 
   def receive = {
     case StartProcess(pdn, doj, trid, params) =>
-      tokenFactory ! new StartToken(pdn, doj, trid, params, sender())
+      localTokenFactory ! new StartToken(pdn, doj, trid, params, sender())
 
     case MakeTransition(pdn, doj, trid, params) =>
-      tokenFactory ! new StartToken(pdn, doj, trid, params, sender())
+      localTokenFactory ! new MoveToken(pdn, doj, trid, params, sender())
 
     case AddDefinition(stri) =>
-      definitionRegistry ! new AddProcessDefinition(parseDefinition(stri))
+      localDefinitionRegistry ! new AddProcessDefinition(parseDefinition(stri))
 
     case Terminated(child) =>
+      // TODO handle by restarting it
       LOG.warn("Actor died " + child)
     case e@_ => LOG.info("Unhandled " + e)
   }
+}
 
-
+object ProcessGuardian {
+  def props(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null): Props =
+    Props(classOf[ProcessGuardian], definitionRegistry, processInstanceFactory, tokenFactory)
 }
