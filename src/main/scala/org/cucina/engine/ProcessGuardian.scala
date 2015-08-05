@@ -21,16 +21,40 @@ case class MakeTransition(processDefinitionName: String, domainObject: Object, t
 
 case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef)
 
-case class AddDefinition(string:String)
+case class AddDefinition(string: String)
 
-class ProcessGuardian() extends Actor with DefinitionParser {
+class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null) extends Actor with DefinitionParser {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
-  private val definitionRegistry = context.actorOf(Props[DefinitionRegistry], "definitionRegistry")
-  context watch definitionRegistry
-  private val processInstanceFactory = context.actorOf(Props(classOf[ProcessInstanceFactory], definitionRegistry), "processInstanceFactory")
-  context watch processInstanceFactory
-  private val tokenFactory = context.actorOf(Props(classOf[TokenFactory], processInstanceFactory), "tokenFactory")
-  context watch tokenFactory
+
+  lazy val localDefinitionRegistry = {
+    if (definitionRegistry == null) {
+      context.actorOf(Props[DefinitionRegistry], "definitionRegistry")
+    } else {
+      definitionRegistry
+    }
+  }
+
+  lazy val localProcessInstanceFactory = {
+    if (processInstanceFactory == null) {
+      context.actorOf(ProcessInstanceFactory.props(localDefinitionRegistry), "processInstanceFactory")
+    } else {
+      processInstanceFactory
+    }
+  }
+
+  lazy val localTokenFactory = {
+    if (tokenFactory == null) {
+      context.actorOf(TokenFactory.props(localProcessInstanceFactory), "tokenFactory")
+    } else {
+      tokenFactory
+    }
+  }
+
+  override def preStart = {
+    context watch localDefinitionRegistry
+    context watch localProcessInstanceFactory
+    context watch localTokenFactory
+  }
 
   def receive = {
     case StartProcess(pdn, doj, trid, params) =>

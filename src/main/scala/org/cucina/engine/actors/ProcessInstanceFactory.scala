@@ -17,8 +17,7 @@ case class MoveInstance(processname: String, processContext: ProcessContext, tra
 
 case class ProcessDefinitionWrap(processDefinition: ProcessDefinition, nested: Object)
 
-
-class ProcessInstanceFactory(val processRegistry: ActorRef) extends Actor {
+class ProcessInstanceFactory(processRegistry: ActorRef) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
   val instances: Map[String, ActorRef] = Map[String, ActorRef]()
 
@@ -49,4 +48,8 @@ class ProcessInstanceFactory(val processRegistry: ActorRef) extends Actor {
 
     case e@_ => LOG.debug("Not handling " + e)
   }
+}
+
+object ProcessInstanceFactory {
+  def props(processRegistry: ActorRef):Props = Props(classOf[ProcessInstanceFactory], processRegistry)
 }

@@ -1,14 +1,12 @@
 package org.cucina.engine.actors
 
-import akka.actor.{Actor, Props, ActorSystem, actorRef2Scala}
+import akka.actor.{Actor, ActorSystem, actorRef2Scala}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 import org.cucina.engine.definition._
 import org.cucina.engine.ProcessContext
-import org.mockito.Mockito._
 
 /**
  * @author levinev
@@ -18,8 +16,7 @@ with ImplicitSender
 with WordSpecLike
 with Matchers
 with BeforeAndAfterAll
-with BeforeAndAfter
-with MockitoSugar {
+with BeforeAndAfter {
   var called: Boolean = false
   val mocktd = new TransitionDescriptor("trand", "land", className = classOf[MockTransitionActor].getName)
   val mockstate = new StateDescriptor("start", List(mocktd), className = classOf[LocalState].getName)

@@ -82,3 +82,7 @@ class TokenFactory(processInstanceFactory: ActorRef) extends Actor {
     processInstanceFactory ! new StartInstance(op.processDefinitionName, processContext, op.transitionId)
   }
 }
+
+object TokenFactory {
+  def props(processInstanceFactory:ActorRef):Props = Props(classOf[TokenFactory], processInstanceFactory)
+}
