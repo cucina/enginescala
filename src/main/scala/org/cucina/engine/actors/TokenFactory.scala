@@ -30,21 +30,26 @@ case class TokenResult(token: Token, op: TokenRequest)
 /**
  * @author levinev
  */
-class TokenFactory(processInstanceFactory: ActorRef) extends Actor {
+class TokenFactory(processInstanceFactory: ActorRef, tokenRepository:ActorRef = null) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
 
-  lazy val tokenRepository = context.actorOf(Props[TokenRepository], name = "tokenRepository")
+  lazy val localTokenRepository = {
+    if(tokenRepository==null)
+      context.actorOf(Props[TokenRepository], name = "tokenRepository")
+    else
+      tokenRepository
+  }
 
   def receive = {
     case st: StartToken =>
       require(st.domainObject != null, "The 'domainObject' cannot be null.")
       // call to tokenRepository to find an existing one for the object
-      tokenRepository ! new FindByDomain(st)
+      localTokenRepository ! new FindByDomain(st)
     case mt: MoveToken =>
       require(mt.domainObject != null, "The 'domainObject' cannot be null.")
       require(mt.transitionId != null, "The 'transitionId' cannot be null.")
       // call to tokenRepository to find an existing one for the object
-      tokenRepository ! new FindByDomain(mt)
+      localTokenRepository ! new FindByDomain(mt)
 
     case TokenResult(token: Token, op: TokenRequest) =>
       op match {

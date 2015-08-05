@@ -11,7 +11,7 @@ import org.mockito.Mockito._
 /**
  * Created by levinev on 05/08/2015.
  */
-class DefinitionRegistrySpec  extends TestKit(ActorSystem("cucina-test"))
+class DefinitionRegistrySpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
 with Matchers
@@ -31,7 +31,7 @@ with MockitoSugar {
         within(500 millis) {
           val actorRef = system.actorOf(Props[DefinitionRegistry])
           actorRef ! new AddProcessDefinition(defin)
-          val obj:Object = new Object
+          val obj: Object = new Object
           actorRef ! new FindDefinition("mock", obj)
           expectMsgPF() {
             case ProcessDefinitionWrap(d, o) =>
