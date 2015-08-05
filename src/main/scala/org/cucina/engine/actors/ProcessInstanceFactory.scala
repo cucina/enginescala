@@ -17,13 +17,11 @@ case class MoveInstance(processname: String, processContext: ProcessContext, tra
 
 case class ProcessDefinitionWrap(processDefinition: ProcessDefinition, nested: Object)
 
-trait ProcessInstanceProvider{
-  def props(definition: ProcessDefinition):Props = ProcessInstance.props(definition)
+trait ProcessInstanceProvider {
+  def props(definition: ProcessDefinition): Props = ProcessInstance.props(definition)
 }
 
-class ProcessInstanceFactory(processRegistry: ActorRef) extends Actor {
-  this: ProcessInstanceProvider =>
-
+class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider: ProcessInstanceProvider = new ProcessInstanceProvider {}) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
   val instances: Map[String, ActorRef] = Map[String, ActorRef]()
 
@@ -38,13 +36,13 @@ class ProcessInstanceFactory(processRegistry: ActorRef) extends Actor {
         si match {
           case StartInstance(_, processContext, transitionId) => {
             // ProcessInstance should be a root of it own actors
-            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(props(pd)))
+            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(processInstanceProvider.props(pd)))
             context watch target
             target ! new ExecuteStart(processContext, transitionId)
           }
           case MoveInstance(_, processContext, transitionId) => {
             // ProcessInstance should be a root of it own actors
-            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(props(pd)))
+            def target: ActorRef = instances.getOrElseUpdate(pd.id, context.actorOf(processInstanceProvider.props(pd)))
             context watch target
             target ! new ExecuteTransition(processContext, transitionId)
           }
@@ -60,5 +58,5 @@ class ProcessInstanceFactory(processRegistry: ActorRef) extends Actor {
 }
 
 object ProcessInstanceFactory {
-  def props(processRegistry: ActorRef):Props = Props(classOf[ProcessInstanceFactory], processRegistry)
+  def props(processRegistry: ActorRef): Props = Props(classOf[ProcessInstanceFactory], processRegistry)
 }

@@ -27,9 +27,17 @@ with MockitoSugar {
 
   val processContext: ProcessContext = new ProcessContext(new Token(null, null), new mutable.HashMap[String, Object](), self)
 
-  val procReg = system.actorOf(Props[TestDefinitionRegistry])
+  val procReg = system.actorOf(Props(new Actor
+    with MockitoSugar {
+    val defin = mock[ProcessDefinition]
+    when(defin.id).thenReturn("mock")
 
-  val actorRef = system.actorOf(Props(new ProcessInstanceFactory(procReg) with TestProcessInstanceProvider))
+    def receive = {
+      case e: FindDefinition => sender ! new ProcessDefinitionWrap(defin, e.nested)
+    }
+  }))
+
+  val actorRef = system.actorOf(Props(classOf[ProcessInstanceFactory], procReg, new TestProcessInstanceProvider))
 
   "ProcessInstanceFactory" when {
     "received StartInstance" should {
@@ -48,24 +56,14 @@ with MockitoSugar {
   }
 }
 
-class TestProcessInstance extends Actor {
-  def receive = {
-    case e:ExecuteStart => e.processContext.client ! new ExecuteComplete(e.processContext)
-    case e@_ => println("TPE:" + e)
-  }
-}
-
-trait TestProcessInstanceProvider extends ProcessInstanceProvider {
+class TestProcessInstanceProvider extends ProcessInstanceProvider {
   override def props(processDefinition: ProcessDefinition): Props = {
-    Props[TestProcessInstance]
+    Props(new Actor {
+      def receive = {
+        case e: ExecuteStart => e.processContext.client ! new ExecuteComplete(e.processContext)
+        case e@_ => println("TPE:" + e)
+      }
+    })
   }
 }
 
-class TestDefinitionRegistry extends Actor with MockitoSugar {
-  val defin = mock[ProcessDefinition]
-  when(defin.id).thenReturn("mock")
-
-  def receive = {
-    case e: FindDefinition => sender ! new ProcessDefinitionWrap(defin, e.nested)
-  }
-}
