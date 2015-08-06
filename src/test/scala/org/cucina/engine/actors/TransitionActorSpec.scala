@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.ProcessContext
+import org.cucina.engine.{ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition.{CheckDescriptor, TransitionDescriptor, OperationDescriptor, Token}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable

@@ -97,7 +97,7 @@ with ImplicitSender {
   }
 
   class EmptyDescriptor extends ProcessElementDescriptor {
-    override val className: String = classOf[EmptyActor].getName
+    override val className: Option[String] = Some(classOf[EmptyActor].getName)
     val arguments: Seq[Any] = Array[Any]("ana", 2)
     override val name: String = "empty"
   }

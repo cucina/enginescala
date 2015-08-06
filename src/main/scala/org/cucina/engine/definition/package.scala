@@ -10,7 +10,9 @@ package object definition {
     implicit val chFormat = jsonFormat3(CheckDescriptor)
     implicit val opFormat = jsonFormat3(OperationDescriptor)
     implicit val traFormat = jsonFormat5(TransitionDescriptor)
-    implicit val staFormat = jsonFormat5(StateDescriptor)
+    implicit val epdFormat = jsonFormat3(EnterPublisherDescriptor)
+    implicit val lpdFormat = jsonFormat3(LeavePublisherDescriptor)
+    implicit val staFormat = jsonFormat7(StateDescriptor)
     implicit val defFormat = jsonFormat4(ProcessDefinition)
   }
 }

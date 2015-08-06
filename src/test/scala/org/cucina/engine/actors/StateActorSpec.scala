@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Props, Actor, ActorSystem, actorRef2Scala}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.ProcessContext
+import org.cucina.engine.{ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition.{TransitionDescriptor, OperationDescriptor, Token}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable
@@ -25,13 +25,14 @@ with BeforeAndAfter {
 
   val enterOperations: Seq[OperationDescriptor] = List(new Op1Desc)
   val leaveOperations: Seq[OperationDescriptor] = List()
-  val transitions: Iterable[TransitionDescriptor] = Set()
+  val transitions: Seq[TransitionDescriptor] = List()
 
   "StateActor" when {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(StateActor.props("state", transitions, enterOperations, leaveOperations))
+          val actorRef = system.actorOf(StateActor.props("state", transitions,
+            new MockStackDescritptor("enterPub"), new MockStackDescritptor("leavePub"), enterOperations, leaveOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>
@@ -52,6 +53,6 @@ class Op1 extends StackElementActor {
   }
 }
 
-class Op1Desc extends OperationDescriptor("op1", className = classOf[Op1].getName) {
+class Op1Desc extends OperationDescriptor("op1", className = Some(classOf[Op1].getName)) {
   override def props: Props = Props[Op1]
 }

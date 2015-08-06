@@ -31,6 +31,7 @@ trait ActorFinder {
 
   /// recursive search in this context and in its parent/grandparent
   def findActor(name: String)(implicit context: ActorContext): Option[ActorRef] = {
+    // TODO cache actors
     val searchPaths = List(name, "../" + name, "../../" + name)
     search(searchPaths)
   }

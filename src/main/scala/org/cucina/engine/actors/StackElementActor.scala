@@ -1,10 +1,9 @@
 package org.cucina.engine.actors
 
 import akka.actor.Actor.Receive
-import akka.actor.{ActorContext, Actor}
-import org.cucina.engine.ProcessContext
+import akka.actor.{ActorRef, ActorContext, Actor}
+import org.cucina.engine.{ExecuteComplete, ProcessContext}
 import org.cucina.engine.actors.support.ActorFinder
-import org.cucina.engine.definition.StackableElementDescriptor
 import org.slf4j.LoggerFactory
 
 /**
@@ -12,7 +11,7 @@ import org.slf4j.LoggerFactory
  *
  * Default behaviour for stack elements such as operations and checks
  */
-case class StackRequest(processContext: ProcessContext, stack: Seq[StackableElementDescriptor])
+case class StackRequest(processContext: ProcessContext, stack: Seq[ActorRef])
 
 case class StackElementExecuteResult(success: Boolean, processContext: ProcessContext = null, message: String = null, trowable: Throwable = null)
 
@@ -31,8 +30,8 @@ trait StackElementActor
     case StackRequest(pc, stack) => {
       execute(pc)
       if (!stack.isEmpty)
-        findAndSend(stack.head, new StackRequest(pc, stack.tail))
-      else pc.client ! new ExecuteComplete(pc)
+        stack.head forward new StackRequest(pc, stack.tail)
+      else sender ! new ExecuteComplete(pc)
     }
   }
 

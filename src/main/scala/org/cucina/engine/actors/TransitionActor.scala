@@ -1,9 +1,9 @@
 package org.cucina.engine.actors
 
 import akka.util.Timeout
-import org.cucina.engine.ProcessContext
-import org.cucina.engine.actors.support.{ActorRefStackableElementDescriptor, ActorFinder}
-import org.cucina.engine.definition.{StackableElementDescriptor, CheckDescriptor, StateDescriptor, OperationDescriptor}
+import org.cucina.engine.{ExecuteFailed, ProcessContext}
+import org.cucina.engine.actors.support.ActorFinder
+import org.cucina.engine.definition.{CheckDescriptor, StateDescriptor, OperationDescriptor}
 import akka.actor._
 import org.slf4j.LoggerFactory
 import scala.concurrent.Await
@@ -29,7 +29,14 @@ class TransitionActor(name: String, output: String,
       case Some(a) => a
     }
   }
-  val staticstack: Seq[StackableElementDescriptor] = checks ++ leaveOperations
+  val checkActors: Seq[ActorRef] = {
+    checks.map(ch => createActor(ch))
+  }
+  val leaveOpActors: Seq[ActorRef] = {
+    leaveOperations.map((lo => createActor(lo)))
+  }
+
+  val staticstack: Seq[ActorRef] = checkActors ++ leaveOpActors
 
   override def preStart() = {
     try {
@@ -47,15 +54,16 @@ class TransitionActor(name: String, output: String,
   // in context terminating it with output state
   def receive = {
     case StackRequest(pc, callerstack) =>
-      // TODO notify the caller from pc
-      require(callerstack.isEmpty, "Transition should be a terminal actor in the stack")
-      //  pc.token.stateId = null
-      // build stack and execute it
-      val stack: Seq[StackableElementDescriptor] = staticstack :+ new ActorRefStackableElementDescriptor(outputState)
-      LOG.info("Stack=" + stack)
-      findAndSend(stack.head, new StackRequest(pc, stack.tail))
+
+      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc, "Transition '" + name + "' should be a terminal actor in the stack")
+      else {
+        // build stack and execute it
+        val stack: Seq[ActorRef] = staticstack :+ outputState
+        LOG.info("Stack=" + stack)
+        stack.head forward new StackRequest(pc, stack.tail)
+      }
     case e@_ =>
-      LOG.warn("Unhandled:"+ e)
+      LOG.warn("Unhandled:" + e)
   }
 }
 

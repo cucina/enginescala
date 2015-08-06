@@ -4,10 +4,7 @@ import akka.actor.{ActorRef, Terminated, Props, Actor}
 import org.cucina.engine.actors._
 import org.cucina.engine.definition.parse.DefinitionParser
 import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
-import org.cucina.engine.definition.reader.FakeDefinitionReader
 import org.slf4j.LoggerFactory
-
-import scala.collection.mutable
 
 
 /**
@@ -22,6 +19,10 @@ case class MakeTransition(processDefinitionName: String, domainObject: Object, t
 case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef)
 
 case class AddDefinition(string: String)
+
+case class ExecuteComplete(processContext: ProcessContext)
+
+case class ExecuteFailed(processContext: ProcessContext = null, failure: String)
 
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
@@ -67,6 +68,11 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
     case AddDefinition(stri) =>
       localDefinitionRegistry ! new AddProcessDefinition(parseDefinition(stri))
 
+    case ExecuteComplete(pc) =>
+      // TODO store token
+      pc.client ! "OK"
+    case ExecuteFailed(pc, error) =>
+      pc.client ! "Whoops"
     case Terminated(child) =>
       // TODO handle by restarting it
       LOG.warn("Actor died " + child)

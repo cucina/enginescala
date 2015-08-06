@@ -7,7 +7,7 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.actor.ActorRef
-import org.cucina.engine.{SignalFailedException, ProcessContext}
+import org.cucina.engine.{ExecuteFailed, ProcessContext}
 
 trait TokenRequest {
   val processDefinitionName: String
@@ -50,7 +50,7 @@ class TokenFactory(processInstanceFactory: ActorRef, tokenRepository:ActorRef = 
           LOG.info("Found existing token:" + token)
           // TODO should it carry on if a token exists or fail here? client policy?
           // startProcess(token, st)
-          st.client ! new SignalFailedException("Cannot start a process, one exists already")
+          sender ! new ExecuteFailed(failure = "Cannot start a process, one exists already")
         case st: MoveToken =>
           LOG.info("Found existing token:" + token)
           moveProcess(token, st)
@@ -63,7 +63,7 @@ class TokenFactory(processInstanceFactory: ActorRef, tokenRepository:ActorRef = 
           startProcess(new Token(st.domainObject), st)
         case st: MoveToken =>
           LOG.info("Token not found for " + st)
-          st.client ! new SignalFailedException("No token found for " + st)
+          sender ! new ExecuteFailed(failure = "No token found for " + st)
       }
 
     case e@_ => LOG.info("Not handling:" + e)

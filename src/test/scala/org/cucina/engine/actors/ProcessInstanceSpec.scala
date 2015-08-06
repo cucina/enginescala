@@ -1,12 +1,12 @@
 package org.cucina.engine.actors
 
-import akka.actor.{Actor, ActorSystem, actorRef2Scala}
+import akka.actor.{Props, Actor, ActorSystem, actorRef2Scala}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 import org.cucina.engine.definition._
-import org.cucina.engine.ProcessContext
+import org.cucina.engine.{ExecuteComplete, ProcessContext}
 
 /**
  * @author levinev
@@ -18,8 +18,8 @@ with Matchers
 with BeforeAndAfterAll
 with BeforeAndAfter {
   var called: Boolean = false
-  val mocktd = new TransitionDescriptor("trand", "land", className = classOf[MockTransitionActor].getName)
-  val mockstate = new StateDescriptor("start", List(mocktd), className = classOf[LocalState].getName)
+  val mocktd = new TransitionDescriptor("trand", "land", className = Some(classOf[MockTransitionActor].getName))
+  val mockstate = new StateDescriptor("start", List(mocktd), className = Some(classOf[LocalState].getName))
   val definition = new ProcessDefinition(List(mockstate), "start", "xxx", "xx")
   val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), self)
 
@@ -74,10 +74,11 @@ with BeforeAndAfter {
   }
 }
 
-class LocalState(name: String, transitions: Iterable[TransitionDescriptor],
+class LocalState(name: String, transitions: Seq[TransitionDescriptor],
+                 enterPublisherDescriptor: EnterPublisherDescriptor, leavePublisherDescriptor: LeavePublisherDescriptor,
                  enterOperations: Seq[OperationDescriptor],
                  leaveOperations: Seq[OperationDescriptor])
-  extends StateActor(name, transitions, enterOperations, leaveOperations) {
+  extends StateActor(name, transitions, new MockStackDescritptor("enterPub"), new MockStackDescritptor("leavePub"), enterOperations, leaveOperations) {
   override def receive: Receive = {
     case EnterState(_, pc) => {
       pc.parameters += ("visited" -> "yes")
@@ -90,6 +91,17 @@ class LocalState(name: String, transitions: Iterable[TransitionDescriptor],
       ///called = true
     }
   }
+}
+
+class MockStackActor(name:String) extends StackElementActor {
+  def execute(processContext: ProcessContext): StackElementExecuteResult = {
+    println("Execute this:" + processContext)
+    return StackElementExecuteResult(true, processContext)
+  }
+}
+
+class MockStackDescritptor(val name: String) extends ProcessElementDescriptor {
+  val className: Option[String] = Some(classOf[MockStackActor].getName)
 }
 
 class MockTransitionActor(name: String, output: String, ops: Seq[OperationDescriptor], cx: Seq[CheckDescriptor]) extends Actor {

@@ -13,10 +13,6 @@ case class ExecuteStart(processContext: ProcessContext, transitionId: String)
 
 case class ExecuteTransition(processContext: ProcessContext, transitionId: String)
 
-case class ExecuteComplete(processContext: ProcessContext)
-
-case class ExecuteFailed(processContext: ProcessContext, failure: String)
-
 class ProcessInstance(processDefinition: ProcessDefinition)
   extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
