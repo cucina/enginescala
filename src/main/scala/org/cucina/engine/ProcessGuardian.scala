@@ -10,19 +10,27 @@ import org.slf4j.LoggerFactory
 /**
  * Created by levinev on 30/07/2015.
  */
+trait ClientContainer {
+  val client: ActorRef
+}
+
 // Transition is optional so is taken only if specified
 case class StartProcess(processDefinitionName: String, domainObject: Object, transitionId: String = null, parameters: Map[String, Object])
 
 // the main call for an existing process
 case class MakeTransition(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object])
 
-case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef)
+case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef) extends ClientContainer
 
 case class AddDefinition(string: String)
 
 case class ExecuteComplete(processContext: ProcessContext)
 
-case class ExecuteFailed(processContext: ProcessContext = null, failure: String)
+case class ExecuteFailed(client: ActorRef, failure: String)
+
+case class ProcessDefinitionWrap(processDefinition: Option[ProcessDefinition], nested: Object)
+
+case class NestedTuple(originalRequest: Object, client: ActorRef)
 
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
@@ -59,20 +67,48 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
   }
 
   def receive = {
-    case StartProcess(pdn, doj, trid, params) =>
-      localTokenFactory ! new StartToken(pdn, doj, trid, params, sender())
+    case e@StartProcess(pdn, _, _, _) =>
+      localDefinitionRegistry ! FindDefinition(pdn, new NestedTuple(e, sender))
 
-    case MakeTransition(pdn, doj, trid, params) =>
-      localTokenFactory ! new MoveToken(pdn, doj, trid, params, sender())
+    case e@MakeTransition(pdn, _, _, _) =>
+      localDefinitionRegistry ! FindDefinition(pdn, new NestedTuple(e, sender))
 
     case AddDefinition(stri) =>
-      localDefinitionRegistry ! new AddProcessDefinition(parseDefinition(stri))
+      localDefinitionRegistry ! AddProcessDefinition(parseDefinition(stri))
 
+    case ProcessDefinitionWrap(definition, cause) =>
+      definition match {
+        case Some(d) =>
+          cause match {
+            case c: NestedTuple =>
+              c.originalRequest match {
+                case e: StartProcess =>
+                  localTokenFactory ! StartToken(d, e.domainObject, e.transitionId, e.parameters, c.client)
+                case e: MakeTransition =>
+                  localTokenFactory ! MoveToken(d, e.domainObject, e.transitionId, e.parameters, c.client)
+                case _ =>
+                  LOG.warn("Unknown originalRequest:" + c.originalRequest)
+                  c.client ! "Unknown originalRequest:" + c.originalRequest
+              }
+            case c@_ =>
+              LOG.warn("Unknown cause" + c)
+          }
+        case None =>
+          cause match {
+            case c: NestedTuple =>
+              c.client ! "Failed to find definition for " + c.originalRequest
+
+          }
+      }
+    case e: StartInstance =>
+      localProcessInstanceFactory ! e
+    case e: MoveInstance =>
+      localProcessInstanceFactory ! e
     case ExecuteComplete(pc) =>
       // TODO store token
       pc.client ! "OK"
     case ExecuteFailed(pc, error) =>
-      pc.client ! "Whoops"
+      pc ! "Whoops:" + error
     case Terminated(child) =>
       // TODO handle by restarting it
       LOG.warn("Actor died " + child)

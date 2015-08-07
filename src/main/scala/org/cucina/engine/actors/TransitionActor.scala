@@ -3,11 +3,9 @@ package org.cucina.engine.actors
 import akka.util.Timeout
 import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.actors.support.ActorFinder
-import org.cucina.engine.definition.{CheckDescriptor, StateDescriptor, OperationDescriptor}
+import org.cucina.engine.definition.{CheckDescriptor, OperationDescriptor}
 import akka.actor._
 import org.slf4j.LoggerFactory
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 /**
  * @author levinev
@@ -55,7 +53,7 @@ class TransitionActor(name: String, output: String,
   def receive = {
     case StackRequest(pc, callerstack) =>
 
-      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc, "Transition '" + name + "' should be a terminal actor in the stack")
+      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
       else {
         // build stack and execute it
         val stack: Seq[ActorRef] = staticstack :+ outputState

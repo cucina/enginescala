@@ -1,6 +1,7 @@
 package org.cucina.engine.actors
 
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
+import org.cucina.engine.ProcessDefinitionWrap
 import org.slf4j.LoggerFactory
 import scala.collection.mutable.Map
 import org.cucina.engine.definition.ProcessDefinition
@@ -19,7 +20,7 @@ class DefinitionRegistry extends Actor {
 
   def receive = {
     case FindDefinition(name, nested) =>
-      sender() ! new ProcessDefinitionWrap(definitions.getOrElse(name, null), nested)
+      sender() ! new ProcessDefinitionWrap(definitions.get(name), nested)
     case AddProcessDefinition(pd) =>
       definitions += (pd.id -> pd)
       LOG.info("Added definition " + pd)

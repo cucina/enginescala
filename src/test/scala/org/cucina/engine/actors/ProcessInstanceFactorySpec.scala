@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.{ExecuteComplete, ProcessContext}
+import org.cucina.engine.{ProcessDefinitionWrap, ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition.{Token, ProcessDefinition}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -25,17 +25,22 @@ with MockitoSugar {
     TestKit.shutdownActorSystem(system)
   }
 
-  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new mutable.HashMap[String, Object](), self)
+  val defin = mock[ProcessDefinition]
+  when(defin.id).thenReturn("mock")
+
+  val processContext: ProcessContext = new ProcessContext(new Token(new Object, defin), new mutable.HashMap[String, Object](), self)
 
   val procReg = system.actorOf(Props(new Actor
     with MockitoSugar {
-    val defin = mock[ProcessDefinition]
-    when(defin.id).thenReturn("mock")
 
     def receive = {
-      case e: FindDefinition => sender ! new ProcessDefinitionWrap(defin, e.nested)
+      case e: FindDefinition =>
+        println("Fake Registry " + e + " sender " + sender)
+        sender ! new ProcessDefinitionWrap(Some(defin), e.nested)
     }
   }))
+
+  println("Me " + self)
 
   val actorRef = system.actorOf(Props(classOf[ProcessInstanceFactory], procReg, new TestProcessInstanceProvider))
 
@@ -43,7 +48,7 @@ with MockitoSugar {
     "received StartInstance" should {
       "receive ProcessDefinitionWrap" in {
         within(500 millis) {
-          actorRef ! new StartInstance("mock", processContext)
+          actorRef ! new StartInstance(processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>
               assert(processContext == pc)
@@ -60,7 +65,9 @@ class TestProcessInstanceProvider extends ProcessInstanceProvider {
   override def props(processDefinition: ProcessDefinition): Props = {
     Props(new Actor {
       def receive = {
-        case e: ExecuteStart => e.processContext.client ! new ExecuteComplete(e.processContext)
+        case e: StartInstance =>
+          println("Got start " + e.processContext + " sender " + sender)
+          sender ! new ExecuteComplete(e.processContext)
         case e@_ => println("TPE:" + e)
       }
     })

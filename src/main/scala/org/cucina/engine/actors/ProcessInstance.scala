@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import org.cucina.engine.ProcessContext
+import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition.ProcessDefinition
 import org.slf4j.LoggerFactory
 import akka.actor._
@@ -9,10 +9,6 @@ import scala.collection.mutable.Map
 /**
  * @author levinev
  */
-case class ExecuteStart(processContext: ProcessContext, transitionId: String)
-
-case class ExecuteTransition(processContext: ProcessContext, transitionId: String)
-
 class ProcessInstance(processDefinition: ProcessDefinition)
   extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass())
@@ -25,15 +21,17 @@ class ProcessInstance(processDefinition: ProcessDefinition)
   }
 
   def receive = {
-    case ExecuteStart(pc, trid) => {
+    case StartInstance(pc, trid) => {
       findState(processDefinition.startState) forward new EnterState(trid, pc)
     }
 
-    case ExecuteTransition(pc, trid) => {
+    case MoveInstance(pc, trid) => {
       findState(pc.token.stateId) forward new LeaveState(trid, pc)
     }
 
-    case e@_ => LOG.info("Unknown:" + e)
+    case e@_ =>
+      LOG.info("Unknown:" + e)
+      sender ! new ExecuteFailed(null, "Unknown:" + e)
   }
 
   private def findState(name: String): ActorRef = {

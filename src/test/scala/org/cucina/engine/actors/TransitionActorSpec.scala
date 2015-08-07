@@ -3,7 +3,8 @@ package org.cucina.engine.actors
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.cucina.engine.{ExecuteComplete, ProcessContext}
-import org.cucina.engine.definition.{CheckDescriptor, TransitionDescriptor, OperationDescriptor, Token}
+import org.cucina.engine.definition._
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
@@ -16,8 +17,9 @@ with ImplicitSender
 with WordSpecLike
 with Matchers
 with BeforeAndAfterAll
-with BeforeAndAfter {
-  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new mutable.HashMap[String, Object](), self)
+with BeforeAndAfter
+with MockitoSugar {
+  val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), self)
   val leaveOperations: Seq[OperationDescriptor] = List()
   val checks: Seq[CheckDescriptor] = List()
 

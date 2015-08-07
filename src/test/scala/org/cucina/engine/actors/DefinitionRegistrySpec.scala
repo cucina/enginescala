@@ -2,6 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
+import org.cucina.engine.ProcessDefinitionWrap
 import org.cucina.engine.definition.ProcessDefinition
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -36,7 +37,7 @@ with MockitoSugar {
           expectMsgPF() {
             case ProcessDefinitionWrap(d, o) =>
               assert(obj == o)
-              assert(d == defin)
+              assert(d.get == defin)
             case a@_ => println("Whopsie:" + a)
           }
         }

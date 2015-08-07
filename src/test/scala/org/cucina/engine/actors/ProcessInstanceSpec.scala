@@ -17,11 +17,10 @@ with WordSpecLike
 with Matchers
 with BeforeAndAfterAll
 with BeforeAndAfter {
-  var called: Boolean = false
-  val mocktd = new TransitionDescriptor("trand", "land", className = Some(classOf[MockTransitionActor].getName))
-  val mockstate = new StateDescriptor("start", List(mocktd), className = Some(classOf[LocalState].getName))
-  val definition = new ProcessDefinition(List(mockstate), "start", "xxx", "xx")
-  val processContext: ProcessContext = new ProcessContext(new Token(null, null), new HashMap[String, Object](), self)
+  val mocktd = TransitionDescriptor("trand", "land", className = Some(classOf[MockTransitionActor].getName))
+  val mockstate = StateDescriptor("start", List(mocktd), className = Some(classOf[LocalState].getName))
+  val definition = ProcessDefinition(List(mockstate), "start", "xxx", "xx")
+  val processContext: ProcessContext = ProcessContext(Token(new Object, definition), HashMap[String, Object](), self)
 
   override def afterAll = {
     TestKit.shutdownActorSystem(system)
@@ -39,10 +38,10 @@ with BeforeAndAfter {
       "return " in {
         within(500 millis) {
           val actorRef = system.actorOf(ProcessInstance.props(definition))
-          actorRef ! new ExecuteStart(processContext, "one")
+          actorRef ! new StartInstance(processContext, "one")
           expectMsgPF() {
             case ExecuteComplete(pc) => {
-              println(pc.parameters)
+              println(pc)
               assert(pc.parameters.get("visited").get == "yes")
             }
           }
@@ -54,17 +53,17 @@ with BeforeAndAfter {
       "return " in {
         within(500 millis) {
           val actorRef = system.actorOf(ProcessInstance.props(definition))
-          actorRef ! new ExecuteStart(processContext, "one")
-          actorRef ! new ExecuteStart(processContext, "two")
+          actorRef ! new StartInstance(processContext, "one")
+          actorRef ! new StartInstance(processContext, "two")
           expectMsgPF() {
             case ExecuteComplete(pc) => {
-              println(pc.parameters)
+              println(pc)
               assert(pc.parameters.get("visited").get == "yes")
             }
           }
           expectMsgPF() {
             case ExecuteComplete(pc) => {
-              println(pc.parameters)
+              println(pc)
               assert(pc.parameters.get("visited").get == "yes")
             }
           }
@@ -88,7 +87,6 @@ class LocalState(name: String, transitions: Seq[TransitionDescriptor],
 
     case a@_ => {
       println("Event:" + a)
-      ///called = true
     }
   }
 }
