@@ -67,7 +67,7 @@ with MockitoSugar {
               me ! "OKI"
           }
         })), blankActor, blankActor))
-        pi ! StartProcess("fake", new Object, null, Map[String, Object]())
+        pi ! StartProcess("fake", new Object, null, None)
         expectMsg("OKI")
       }
     }
@@ -81,7 +81,7 @@ with MockitoSugar {
               me ! "OKI"
           }
         })), blankActor, blankActor))
-        pi ! MakeTransition("fake", new Object, null, Map[String, Object]())
+        pi ! MakeTransition("fake", new Object, null, None)
         expectMsg("OKI")
       }
     }
@@ -99,7 +99,7 @@ with MockitoSugar {
               me ! "OKI"
           }
         }))))
-        pi ! ProcessDefinitionWrap(Some(definition), NestedTuple(StartProcess("fake", obj, null, Map[String, Object]()), me))
+        pi ! ProcessDefinitionWrap(Some(definition), NestedTuple(StartProcess("fake", obj, null, None), me))
         expectMsg("OKI")
       }
       "call tokenFactory with move" in {
@@ -113,7 +113,7 @@ with MockitoSugar {
               me ! "OKI"
           }
         }))))
-        pi ! ProcessDefinitionWrap(Some(definition), NestedTuple(MakeTransition("fake", obj, null, Map[String, Object]()), me))
+        pi ! ProcessDefinitionWrap(Some(definition), NestedTuple(MakeTransition("fake", obj, null, None), me))
         expectMsg("OKI")
       }
     }

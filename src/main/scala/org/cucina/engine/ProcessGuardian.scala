@@ -4,7 +4,10 @@ import akka.actor.{ActorRef, Terminated, Props, Actor}
 import org.cucina.engine.actors._
 import org.cucina.engine.definition.parse.DefinitionParser
 import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
+import org.cucina.engine.repository.MapTokenRepository
 import org.slf4j.LoggerFactory
+
+import scala.collection.immutable.HashMap
 
 
 /**
@@ -15,10 +18,10 @@ trait ClientContainer {
 }
 
 // Transition is optional so is taken only if specified
-case class StartProcess(processDefinitionName: String, domainObject: Object, transitionId: String = null, parameters: Map[String, Object])
+case class StartProcess(processDefinitionName: String, domainObject: Object, transitionId: String = null, parameters: Option[Map[String, Object]] = None)
 
 // the main call for an existing process
-case class MakeTransition(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Map[String, Object])
+case class MakeTransition(processDefinitionName: String, domainObject: Object, transitionId: String, parameters: Option[Map[String, Object]] = None)
 
 case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map[String, Object], client: ActorRef) extends ClientContainer
 
@@ -26,11 +29,11 @@ case class AddDefinition(string: String)
 
 case class ExecuteComplete(processContext: ProcessContext)
 
-case class ExecuteFailed(client: ActorRef, failure: String)
+case class ExecuteFailed(client: ActorRef, failure: String) extends ClientContainer
 
 case class ProcessDefinitionWrap(processDefinition: Option[ProcessDefinition], nested: Object)
 
-case class NestedTuple(originalRequest: Object, client: ActorRef)
+case class NestedTuple(originalRequest: Object, client: ActorRef) extends ClientContainer
 
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
@@ -54,7 +57,8 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
 
   lazy val localTokenFactory = {
     if (tokenFactory == null) {
-      context.actorOf(TokenFactory.props(localProcessInstanceFactory), "tokenFactory")
+      val tokenRepository = context.actorOf(Props[MapTokenRepository], "tokenRepository")
+      context.actorOf(TokenFactory.props(tokenRepository), "tokenFactory")
     } else {
       tokenFactory
     }
@@ -79,13 +83,17 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
     case ProcessDefinitionWrap(definition, cause) =>
       definition match {
         case Some(d) =>
+          LOG.info("Found definition:" + d)
           cause match {
             case c: NestedTuple =>
               c.originalRequest match {
                 case e: StartProcess =>
-                  localTokenFactory ! StartToken(d, e.domainObject, e.transitionId, e.parameters, c.client)
+                  LOG.info("Starting process:" + e)
+                  println(localTokenFactory)
+                  localTokenFactory ! StartToken(d, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), c.client)
                 case e: MakeTransition =>
-                  localTokenFactory ! MoveToken(d, e.domainObject, e.transitionId, e.parameters, c.client)
+                  LOG.info("Making transition:" + e)
+                  localTokenFactory ! MoveToken(d, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), c.client)
                 case _ =>
                   LOG.warn("Unknown originalRequest:" + c.originalRequest)
                   c.client ! "Unknown originalRequest:" + c.originalRequest

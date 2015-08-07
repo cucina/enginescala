@@ -32,17 +32,19 @@ case class TokenResult(token: Token, op: TokenRequest)
  */
 class TokenFactory(tokenRepository: ActorRef) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
+  val me = self
 
   def receive = {
     case st: StartToken =>
       require(st.domainObject != null, "The 'domainObject' cannot be null.")
       // call to tokenRepository to find an existing one for the object
-      tokenRepository forward FindByDomain(st, self)
+      println(tokenRepository)
+      tokenRepository forward FindByDomain(st, me)
     case mt: MoveToken =>
       require(mt.domainObject != null, "The 'domainObject' cannot be null.")
       require(mt.transitionId != null, "The 'transitionId' cannot be null.")
       // call to tokenRepository to find an existing one for the object
-      tokenRepository forward FindByDomain(mt, self)
+      tokenRepository forward FindByDomain(mt, me)
 
     case TokenResult(token: Token, op: TokenRequest) =>
       op match {
@@ -82,5 +84,5 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
 }
 
 object TokenFactory {
-  def props(tokenRespository: ActorRef): Props = Props(classOf[TokenFactory], tokenRespository)
+  def props(tokenRepository: ActorRef): Props = Props(classOf[TokenFactory], tokenRepository)
 }

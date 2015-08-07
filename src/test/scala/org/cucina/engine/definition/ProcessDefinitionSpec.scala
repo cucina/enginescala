@@ -15,12 +15,11 @@ class ProcessDefinitionSpec
     "serialized" should {
       "produce json" in {
         import spray.json._
+        import DefinitionProtocol._
 
         val tr1 = new TransitionDescriptor("tr1", "end")
         val states = List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List()))
         val definition = new ProcessDefinition(states, "start", "fake", "fake")
-
-        import DefinitionProtocol._
 
         val json = definition.toJson
         val str = json.compactPrint
