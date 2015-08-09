@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, Terminated, Props, Actor}
 import org.cucina.engine.actors._
 import org.cucina.engine.definition.parse.DefinitionParser
 import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
-import org.cucina.engine.repository.MapTokenRepository
+import org.cucina.engine.repository.{StoreToken, MapTokenRepository}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.HashMap
@@ -113,8 +113,9 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
     case e: MoveInstance =>
       localProcessInstanceFactory ! e
     case ExecuteComplete(pc) =>
-      // TODO store token
-      pc.client ! "OK"
+      LOG.info("Completed for " + pc)
+      localTokenFactory ! StoreToken(pc.token)
+      pc.client ! pc.token.domainObject
     case ExecuteFailed(pc, error) =>
       pc ! "Whoops:" + error
     case Terminated(child) =>

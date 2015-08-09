@@ -44,7 +44,8 @@ case class StateDescriptor(name: String,
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[StateActor].getName)), name, transitions, enterPublisher getOrElse (null), leavePublisher getOrElse (null),
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[StateActor].getName)), name, transitions,
+    enterPublisher getOrElse (EnterPublisherDescriptor(List())), leavePublisher getOrElse (LeavePublisherDescriptor(List())),
     enterOperations.get, leaveOperations.get)
 }
 

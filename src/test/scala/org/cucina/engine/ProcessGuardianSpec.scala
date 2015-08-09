@@ -32,6 +32,7 @@ with MockitoSugar {
 
   val proccon = mock[ProcessContext]
   when(proccon.client).thenReturn(self)
+  when(proccon.token)
 
   val blankActor = system.actorOf(Props(new BlankActor))
   "ProcessGuardian actor" when {

@@ -67,6 +67,8 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
           LOG.info("Token not found for " + st)
           sender ! ExecuteFailed(st.client, "No token found for " + st)
       }
+    case t:StoreToken =>
+      tokenRepository ! t
 
     case e@_ => LOG.info("Not handling:" + e)
   }

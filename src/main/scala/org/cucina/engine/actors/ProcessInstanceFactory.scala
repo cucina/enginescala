@@ -15,12 +15,12 @@ case class StartInstance(processContext: ProcessContext, transitionId: String = 
 
 case class MoveInstance(processContext: ProcessContext, transitionId: String)
 
-trait ProcessInstanceProvider {
+class ProcessInstanceProvider {
   def props(definition: ProcessDefinition): Props = ProcessInstance.props(definition)
 }
 
 // TODO add global listeners
-class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider: ProcessInstanceProvider = new ProcessInstanceProvider {}) extends Actor {
+class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider: ProcessInstanceProvider = new ProcessInstanceProvider) extends Actor {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
   val instances: Map[String, ActorRef] = Map[String, ActorRef]()
 
@@ -52,5 +52,6 @@ class ProcessInstanceFactory(processRegistry: ActorRef, processInstanceProvider:
 }
 
 object ProcessInstanceFactory {
-  def props(processRegistry: ActorRef): Props = Props(classOf[ProcessInstanceFactory], processRegistry, null)
+  def props(processRegistry: ActorRef): Props = Props(classOf[ProcessInstanceFactory], processRegistry, new ProcessInstanceProvider)
+  def props(processRegistry: ActorRef, processInstanceProvider: ProcessInstanceProvider): Props = Props(classOf[ProcessInstanceFactory], processRegistry, new ProcessInstanceProvider)
 }
