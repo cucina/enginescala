@@ -9,7 +9,6 @@ import org.cucina.engine.actors.support.ActorFinder
  */
 
 // TODO have a single class using a type of event in constructor
-case class EnterEvent(processContext: ProcessContext)
 
 abstract class EventPublisher(val listeners: Seq[String]) extends StackElementActor {
   lazy val listActors: Seq[ActorRef] = {
@@ -34,8 +33,6 @@ class EnterPublisher(listeners: Seq[String])
 object EnterPublisher {
   def props(listeners: Seq[String]): Props = Props(classOf[EnterPublisher], listeners)
 }
-
-case class LeaveEvent(processContext: ProcessContext)
 
 class LeavePublisher(listeners: Seq[String])
   extends EventPublisher(listeners) {

@@ -18,8 +18,8 @@ case class LeaveState(transitionName: String, processContext: ProcessContext)
 
 class StateActor(name: String,
                  transitions: Seq[TransitionDescriptor],
-                 enterPublisher: ProcessElementDescriptor = new EnterPublisherDescriptor(List()),
-                 leavePublisher: ProcessElementDescriptor = new LeavePublisherDescriptor(List()),
+                 enterListeners: Seq[ListenerDescriptor] = List(),
+                 leaveListeners: Seq[ListenerDescriptor] = List(),
                  enterOperations: Seq[OperationDescriptor] = Nil,
                  leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
@@ -33,8 +33,8 @@ class StateActor(name: String,
   lazy val transActors: Map[String, ActorRef] = {
     transitions.map(tr => tr.name -> createActor(tr)).toMap
   }
-  lazy val enterPubActor: ActorRef = createActor(enterPublisher)
-  lazy val leavePubActor: ActorRef = createActor(leavePublisher)
+  lazy val enterPubActor: ActorRef = createActor(new EnterPublisherDescriptor(enterListeners))
+  lazy val leavePubActor: ActorRef = createActor(new LeavePublisherDescriptor(leaveListeners))
   lazy val enterStack: Seq[ActorRef] = enterOpActors :+ enterPubActor
   lazy val leaveStack: Seq[ActorRef] = leaveOpActors :+ leavePubActor
 

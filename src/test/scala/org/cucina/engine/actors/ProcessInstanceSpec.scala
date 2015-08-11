@@ -77,7 +77,7 @@ class LocalState(name: String, transitions: Seq[TransitionDescriptor],
                  enterPublisherDescriptor: EnterPublisherDescriptor, leavePublisherDescriptor: LeavePublisherDescriptor,
                  enterOperations: Seq[OperationDescriptor],
                  leaveOperations: Seq[OperationDescriptor])
-  extends StateActor(name, transitions, new MockStackDescritptor("enterPub"), new MockStackDescritptor("leavePub"), enterOperations, leaveOperations) {
+  extends StateActor(name, transitions, new ListenerDescriptor("enterListen")::Nil, new ListenerDescriptor("leaveListen")::Nil, enterOperations, leaveOperations) {
   override def receive: Receive = {
     case EnterState(_, pc) => {
       pc.parameters += ("visited" -> "yes")
