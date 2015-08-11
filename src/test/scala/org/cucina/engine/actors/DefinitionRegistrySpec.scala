@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.ProcessDefinitionWrap
+import org.cucina.engine.{NestedTuple, ProcessDefinitionWrap}
 import org.cucina.engine.definition.ProcessDefinition
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -33,12 +33,12 @@ with MockitoSugar {
           val actorRef = system.actorOf(Props[DefinitionRegistry])
           actorRef ! new AddProcessDefinition(defin)
           val obj: Object = new Object
-          actorRef ! new FindDefinition("mock", obj)
+          actorRef ! new FindDefinition("mock", NestedTuple(obj, self))
           expectMsgPF() {
             case ProcessDefinitionWrap(d, o) =>
-              assert(obj == o)
-              assert(d.get == defin)
-            case a@_ => println("Whopsie:" + a)
+              assert(obj == o.originalRequest)
+              assert(d == defin)
+            case a@_ => println("Whoopsie:" + a)
           }
         }
       }

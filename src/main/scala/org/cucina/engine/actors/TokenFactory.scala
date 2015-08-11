@@ -38,7 +38,7 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
     case st: StartToken =>
       require(st.domainObject != null, "The 'domainObject' cannot be null.")
       // call to tokenRepository to find an existing one for the object
-      println(tokenRepository)
+      LOG.debug("tokenRepository:" + tokenRepository)
       tokenRepository forward FindByDomain(st, me)
     case mt: MoveToken =>
       require(mt.domainObject != null, "The 'domainObject' cannot be null.")

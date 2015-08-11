@@ -43,7 +43,10 @@ class StateActor(name: String,
       pc.token.stateId = name
       LOG.info("entering stateId=" + name)
       LOG.info("Calling " + enterStack.head)
-      enterStack.head forward new StackRequest(pc, enterStack.tail)
+      transActors.get(tr) match {
+        case Some(t) => enterStack.head forward new StackRequest(pc, enterStack.tail :+ t)
+        case None => enterStack.head forward new StackRequest(pc, enterStack.tail)
+      }
 
     case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {
@@ -57,11 +60,17 @@ class StateActor(name: String,
           val stack = leaveStack :+ a
           stack.head forward new StackRequest(pc, stack.tail)
       }
+    case StackRequest(pc, callerstack) =>
+      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "State '" + name + "' should be a terminal actor in the stack")
+      else {
+        LOG.info("Entering state=" + name)
+        enterStack.head forward new StackRequest(pc, enterStack.tail)
+      }
 
     case Terminated(child) =>
       LOG.warn("A child is dead:" + child)
     // TODO handle and revive
-    case _ =>
+    case e@_ => LOG.warn("Unhandled " + e)
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {

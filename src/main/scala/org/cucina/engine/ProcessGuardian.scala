@@ -31,9 +31,11 @@ case class ExecuteComplete(processContext: ProcessContext)
 
 case class ExecuteFailed(client: ActorRef, failure: String) extends ClientContainer
 
-case class ProcessDefinitionWrap(processDefinition: Option[ProcessDefinition], nested: Object)
+case class ProcessDefinitionWrap(processDefinition: ProcessDefinition, nested: NestedTuple)
 
 case class NestedTuple(originalRequest: Object, client: ActorRef) extends ClientContainer
+
+case class ProcessFailure(cause: String)
 
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
@@ -81,32 +83,17 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
       localDefinitionRegistry ! AddProcessDefinition(parseDefinition(stri))
 
     case ProcessDefinitionWrap(definition, cause) =>
-      definition match {
-        case Some(d) =>
-          LOG.info("Found definition:" + d)
-          cause match {
-            case c: NestedTuple =>
-              c.originalRequest match {
-                case e: StartProcess =>
-                  LOG.info("Starting process:" + e)
-                  println(localTokenFactory)
-                  localTokenFactory ! StartToken(d, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), c.client)
-                case e: MakeTransition =>
-                  LOG.info("Making transition:" + e)
-                  localTokenFactory ! MoveToken(d, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), c.client)
-                case _ =>
-                  LOG.warn("Unknown originalRequest:" + c.originalRequest)
-                  c.client ! "Unknown originalRequest:" + c.originalRequest
-              }
-            case c@_ =>
-              LOG.warn("Unknown cause" + c)
-          }
-        case None =>
-          cause match {
-            case c: NestedTuple =>
-              c.client ! "Failed to find definition for " + c.originalRequest
-
-          }
+      cause.originalRequest match {
+        case e: StartProcess =>
+          LOG.info("Starting process:" + e)
+          LOG.debug("localTokenFactory:" + localTokenFactory)
+          localTokenFactory ! StartToken(definition, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), cause.client)
+        case e: MakeTransition =>
+          LOG.info("Making transition:" + e)
+          localTokenFactory ! MoveToken(definition, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), cause.client)
+        case _ =>
+          LOG.warn("Unknown originalRequest:" + cause.originalRequest)
+          cause.client ! "Unknown originalRequest:" + cause.originalRequest
       }
     case e: StartInstance =>
       localProcessInstanceFactory ! e
@@ -117,7 +104,7 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
       localTokenFactory ! StoreToken(pc.token)
       pc.client ! pc.token.domainObject
     case ExecuteFailed(pc, error) =>
-      pc ! "Whoops:" + error
+      pc ! ProcessFailure("Whoops:" + error)
     case Terminated(child) =>
       // TODO handle by restarting it
       LOG.warn("Actor died " + child)

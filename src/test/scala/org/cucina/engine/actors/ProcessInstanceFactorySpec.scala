@@ -36,7 +36,7 @@ with MockitoSugar {
     def receive = {
       case e: FindDefinition =>
         println("Fake Registry " + e + " sender " + sender)
-        sender ! new ProcessDefinitionWrap(Some(defin), e.nested)
+        sender ! new ProcessDefinitionWrap(defin, e.nested)
     }
   }))
 

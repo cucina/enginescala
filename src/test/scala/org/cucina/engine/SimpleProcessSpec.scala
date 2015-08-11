@@ -25,22 +25,35 @@ with MockitoSugar {
   val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end")))
   val endState = StateDescriptor("end", List())
   val simpleStates = List(startState, endState)
+  val domainObject = new Object
 
   "ProcessGuardian" when {
+    import spray.json._
+    import DefinitionProtocol._
+    val simpleDef = ProcessDefinition(simpleStates, "start", "desc", "simple")
+
+    val json = simpleDef.toJson
+    val str = json.compactPrint
+    println(str)
+
     "added and ran simple" should {
+      val guardian = system.actorOf(ProcessGuardian.props())
+      guardian ! AddDefinition(str)
       "produce complete" in {
-        import spray.json._
-        import DefinitionProtocol._
-        val simpleDef = ProcessDefinition(simpleStates, "start", "desc", "simple")
-
-        val json = simpleDef.toJson
-        val str = json.compactPrint
-        println(str)
-
-        val guardian = system.actorOf(ProcessGuardian.props())
-        guardian ! AddDefinition(str)
-        guardian ! StartProcess("simple", new Object)
-        expectMsg("OK")
+        guardian ! StartProcess("simple", domainObject)
+        expectMsg(domainObject)
+      }
+      "fail on dupe" in {
+        guardian ! StartProcess("simple", domainObject)
+        expectMsgPF(){
+          case ProcessFailure(_) => // good
+          case f@_ => fail("Unexpected result:" + f)
+        }
+      }
+      "execute transition" in {
+        val obj = new Object
+        guardian ! StartProcess("simple", obj, "tr1")
+        expectMsg(obj)
       }
     }
   }

@@ -52,7 +52,6 @@ class TransitionActor(name: String, output: String,
   // in context terminating it with output state
   def receive = {
     case StackRequest(pc, callerstack) =>
-
       if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
       else {
         // build stack and execute it
