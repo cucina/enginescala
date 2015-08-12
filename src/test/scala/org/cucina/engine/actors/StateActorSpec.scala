@@ -34,7 +34,7 @@ with MockitoSugar {
       "return " in {
         within(500 millis) {
           val actorRef = system.actorOf(StateActor.props("state", transitions,
-            new MockStackDescritptor("enterPub"), new MockStackDescritptor("leavePub"), enterOperations, leaveOperations))
+            List(), List(), enterOperations, leaveOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>

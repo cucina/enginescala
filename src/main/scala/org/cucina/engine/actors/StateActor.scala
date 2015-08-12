@@ -80,8 +80,8 @@ class StateActor(name: String,
 
 object StateActor {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: ProcessElementDescriptor,
-            leavePublisher: ProcessElementDescriptor,
+            enterPublisher: Seq[ListenerDescriptor],
+            leavePublisher: Seq[ListenerDescriptor],
             enterOperations: Seq[OperationDescriptor],
             leaveOperations: Seq[OperationDescriptor]): Props = {
     Props(classOf[StateActor], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)

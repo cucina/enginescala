@@ -36,8 +36,8 @@ with BeforeAndAfter {
 
     "receiving ExecuteStart" should {
       "return " in {
+        val actorRef = system.actorOf(ProcessInstance.props(definition))
         within(500 millis) {
-          val actorRef = system.actorOf(ProcessInstance.props(definition))
           actorRef ! new StartInstance(processContext, "one")
           expectMsgPF() {
             case ExecuteComplete(pc) => {
@@ -51,8 +51,8 @@ with BeforeAndAfter {
 
     "receiving two ExecuteStarts" should {
       "return " in {
+        val actorRef = system.actorOf(ProcessInstance.props(definition))
         within(500 millis) {
-          val actorRef = system.actorOf(ProcessInstance.props(definition))
           actorRef ! new StartInstance(processContext, "one")
           actorRef ! new StartInstance(processContext, "two")
           expectMsgPF() {
@@ -74,7 +74,8 @@ with BeforeAndAfter {
 }
 
 class LocalState(name: String, transitions: Seq[TransitionDescriptor],
-                 enterPublisherDescriptor: EnterPublisherDescriptor, leavePublisherDescriptor: LeavePublisherDescriptor,
+                 enterListeners: Seq[ListenerDescriptor],
+                 leaveListeners: Seq[ListenerDescriptor],
                  enterOperations: Seq[OperationDescriptor],
                  leaveOperations: Seq[OperationDescriptor])
   extends StateActor(name, transitions, new ListenerDescriptor("enterListen")::Nil, new ListenerDescriptor("leaveListen")::Nil, enterOperations, leaveOperations) {

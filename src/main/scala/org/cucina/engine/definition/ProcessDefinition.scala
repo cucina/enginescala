@@ -43,14 +43,14 @@ case class TransitionDescriptor(name: String, output: String,
 
 case class StateDescriptor(name: String,
                            transitions: Seq[TransitionDescriptor],
-                           enterListeners: List[ListenerDescriptor] = List(),
-                           leaveListeners: List[ListenerDescriptor] = List(),
+                           enterListeners: Option[Seq[ListenerDescriptor]] = Some(List()),
+                           leaveListeners: Option[List[ListenerDescriptor]] = Some(List()),
                            enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
   extends ProcessElementDescriptor {
   override def props: Props = Props(Class.forName(className.getOrElse(classOf[StateActor].getName)), name, transitions,
-    enterListeners, leaveListeners,
+    enterListeners.get, leaveListeners.get,
     enterOperations.get, leaveOperations.get)
 }
 
