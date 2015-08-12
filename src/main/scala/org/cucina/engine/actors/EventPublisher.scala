@@ -2,7 +2,6 @@ package org.cucina.engine.actors
 
 import akka.actor.{Props, ActorContext, ActorRef, Actor}
 import org.cucina.engine.ProcessContext
-import org.cucina.engine.actors.support.ActorFinder
 
 /**
  * Created by levinev on 28/07/2015.
@@ -10,43 +9,28 @@ import org.cucina.engine.actors.support.ActorFinder
 
 // TODO have a single class using a type of event in constructor
 
-abstract class EventPublisher(val listeners: Seq[String]) extends StackElementActor {
+class EventPublisher(val listeners: Seq[String], buildEvent: ProcessContext => ProcessEvent) extends StackElementActor {
   lazy val listActors: Seq[ActorRef] = {
     val seq: Seq[Option[ActorRef]] = listeners.map(l => findActor(l))
     for (Some(ar) <- seq) yield ar
   }
-}
-
-class EnterPublisher(listeners: Seq[String])
-  extends EventPublisher(listeners) {
 
   override def preStart(): Unit = {
     listActors
   }
 
   def execute(processContext: ProcessContext): StackElementExecuteResult = {
-    listActors.foreach(l => l ! new EnterEvent(processContext))
+    listActors.foreach(l => l ! buildEvent(processContext))
     new StackElementExecuteResult(true, processContext)
   }
 }
 
 object EnterPublisher {
-  def props(listeners: Seq[String]): Props = Props(classOf[EnterPublisher], listeners)
-}
-
-class LeavePublisher(listeners: Seq[String])
-  extends EventPublisher(listeners) {
-
-  override def preStart(): Unit = {
-    listActors
-  }
-
-  def execute(processContext: ProcessContext): StackElementExecuteResult = {
-    listActors.foreach(l => l ! new LeaveEvent(processContext))
-    new StackElementExecuteResult(true, processContext)
-  }
+  val buildEvent = (pc:ProcessContext) => new EnterEvent(pc)
+  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, buildEvent)
 }
 
 object LeavePublisher {
-  def props(listeners: Seq[String]): Props = Props(classOf[LeavePublisher], listeners)
+  val buildEvent = (pc:ProcessContext) => new LeaveEvent(pc)
+  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, buildEvent)
 }

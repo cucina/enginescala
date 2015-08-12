@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.Actor.Receive
 import akka.actor.{ActorRef, ActorContext, Actor}
-import org.cucina.engine.{ExecuteComplete, ProcessContext}
+import org.cucina.engine.{ExecuteFailed, ExecuteComplete, ProcessContext}
 import org.cucina.engine.actors.support.ActorFinder
 import org.slf4j.LoggerFactory
 
@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
  */
 case class StackRequest(processContext: ProcessContext, stack: Seq[ActorRef])
 
-case class StackElementExecuteResult(success: Boolean, processContext: ProcessContext = null, message: String = null, trowable: Throwable = null)
+case class StackElementExecuteResult(success: Boolean, processContext: ProcessContext = null, message: String = null, throwable: Throwable = null)
 
 trait StackElementActor
   extends Actor
@@ -28,10 +28,13 @@ trait StackElementActor
 
   def receiveStack(implicit context: ActorContext): Receive = {
     case StackRequest(pc, stack) => {
-      execute(pc)
-      if (!stack.isEmpty)
-        stack.head forward new StackRequest(pc, stack.tail)
-      else sender ! new ExecuteComplete(pc)
+      execute(pc) match {
+        case StackElementExecuteResult(false, pc, message, throwable) => sender ! ExecuteFailed(pc.client, message)
+        case _ =>
+          if (!stack.isEmpty)
+            stack.head forward StackRequest(pc, stack.tail)
+          else sender ! ExecuteComplete(pc)
+      }
     }
   }
 

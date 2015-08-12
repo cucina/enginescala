@@ -28,11 +28,6 @@ case class OperationDescriptor(name: String, className: Option[String] = Some(cl
 case class CheckDescriptor(name: String, className: Option[String] = Some(classOf[PassingCheckActor].getName), arguments: Option[List[String]] = None)
   extends ProcessElementDescriptor
 
-case class ListenerDescriptor(name: String, className: Option[String] = Some(classOf[LoggingListenerActor].getName), arguments: Option[List[String]] = None)
-  extends ProcessElementDescriptor {
-  override def props:Props = Props(Class.forName(className.get), arguments.getOrElse(List))
-}
-
 case class TransitionDescriptor(name: String, output: String,
                                 leaveOperations: Seq[OperationDescriptor] = List(),
                                 checks: Seq[CheckDescriptor] = List(),
@@ -43,8 +38,8 @@ case class TransitionDescriptor(name: String, output: String,
 
 case class StateDescriptor(name: String,
                            transitions: Seq[TransitionDescriptor],
-                           enterListeners: Option[Seq[ListenerDescriptor]] = Some(List()),
-                           leaveListeners: Option[List[ListenerDescriptor]] = Some(List()),
+                           enterListeners: Option[Seq[String]] = Some(List()),
+                           leaveListeners: Option[Seq[String]] = Some(List()),
                            enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
@@ -54,16 +49,16 @@ case class StateDescriptor(name: String,
     enterOperations.get, leaveOperations.get)
 }
 
-case class EnterPublisherDescriptor(listeners: Seq[ListenerDescriptor],
+case class EnterPublisherDescriptor(listeners: Seq[String],
                                     val name: String = "enterPublisher",
                                     className: Option[String] = None) extends ProcessElementDescriptor {
-  override def props = Props(Class.forName(className.getOrElse(classOf[EnterPublisher].getName)), listeners)
+  override def props = EnterPublisher.props(listeners)
 }
 
-case class LeavePublisherDescriptor(listeners: Seq[ListenerDescriptor],
+case class LeavePublisherDescriptor(listeners: Seq[String],
                                     val name: String = "leavePublisher",
                                     className: Option[String] = None) extends ProcessElementDescriptor {
-  override def props = Props(Class.forName(className.getOrElse(classOf[LeavePublisher].getName)), listeners)
+  override def props = LeavePublisher.props(listeners)
 }
 
 

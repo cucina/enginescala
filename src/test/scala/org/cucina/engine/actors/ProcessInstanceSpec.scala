@@ -1,8 +1,8 @@
 package org.cucina.engine.actors
 
-import akka.actor.{Props, Actor, ActorSystem, actorRef2Scala}
+import akka.actor.{Actor, ActorSystem, actorRef2Scala}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
+import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 import org.cucina.engine.definition._
@@ -15,16 +15,16 @@ class ProcessInstanceSpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
 with Matchers
-with BeforeAndAfterAll
-with BeforeAndAfter {
+with BeforeAndAfterAll {
+  override def afterAll = {
+    TestKit.shutdownActorSystem(system)
+  }
+
   val mocktd = TransitionDescriptor("trand", "land", className = Some(classOf[MockTransitionActor].getName))
   val mockstate = StateDescriptor("start", List(mocktd), className = Some(classOf[LocalState].getName))
   val definition = ProcessDefinition(List(mockstate), "start", "xxx", "xx")
   val processContext: ProcessContext = ProcessContext(Token(new Object, definition), HashMap[String, Object](), self)
 
-  override def afterAll = {
-    TestKit.shutdownActorSystem(system)
-  }
 
   "ProcessInstance actor" when {
     "created" should {
@@ -74,11 +74,11 @@ with BeforeAndAfter {
 }
 
 class LocalState(name: String, transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[ListenerDescriptor],
-                 leaveListeners: Seq[ListenerDescriptor],
+                 enterListeners: Seq[String],
+                 leaveListeners: Seq[String],
                  enterOperations: Seq[OperationDescriptor],
                  leaveOperations: Seq[OperationDescriptor])
-  extends StateActor(name, transitions, new ListenerDescriptor("enterListen")::Nil, new ListenerDescriptor("leaveListen")::Nil, enterOperations, leaveOperations) {
+  extends StateActor(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
   override def receive: Receive = {
     case EnterState(_, pc) => {
       pc.parameters += ("visited" -> "yes")

@@ -4,6 +4,7 @@ import akka.actor._
 import akka.util.Timeout
 import org.cucina.engine.definition.ProcessElementDescriptor
 import org.slf4j.LoggerFactory
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.Await
 
@@ -56,24 +57,32 @@ trait ActorFinder {
     }
   }
 
+  private[this] val cache = new mutable.HashMap[String, ActorRef]()
+
   private def searchPath(path: String)(implicit context: ActorContext): Option[ActorRef] = {
-    LOG.info("Path:" + path)
-    try {
-      // TODO parameter for timeout?
-      implicit val resolveTimeout = Timeout(500 millis)
-      val ac = context.actorSelection(path)
-      val ro = ac.resolveOne()
-      val actorRef = Await.result(ro, resolveTimeout.duration)
-      LOG.info("Located actor:" + actorRef)
-      actorRef match {
-        case null => None
-        case _ => Some(actorRef)
-      }
-    } catch {
-      case e: ActorNotFound => {
-        LOG.warn("Failed to find actor by name '" + path + "'")
-        None
-      }
+    cache.get(path) match {
+      case s@Some(_) => s
+      case None =>
+        LOG.info("Path:" + path)
+        try {
+          // TODO parameter for timeout?
+          implicit val resolveTimeout = Timeout(500 millis)
+          val ac = context.actorSelection(path)
+          val ro = ac.resolveOne()
+          val actorRef = Await.result(ro, resolveTimeout.duration)
+          LOG.info("Located actor:" + actorRef)
+          actorRef match {
+            case null => None
+            case _ =>
+              cache.put(path, actorRef)
+              Some(actorRef)
+          }
+        } catch {
+          case e: ActorNotFound => {
+            LOG.warn("Failed to find actor by name '" + path + "'")
+            None
+          }
+        }
     }
   }
 

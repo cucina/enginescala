@@ -18,8 +18,8 @@ case class LeaveState(transitionName: String, processContext: ProcessContext)
 
 class StateActor(name: String,
                  transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[ListenerDescriptor] = List(),
-                 leaveListeners: Seq[ListenerDescriptor] = List(),
+                 enterListeners: Seq[String] = List(),
+                 leaveListeners: Seq[String] = List(),
                  enterOperations: Seq[OperationDescriptor] = Nil,
                  leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
@@ -80,8 +80,8 @@ class StateActor(name: String,
 
 object StateActor {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: Seq[ListenerDescriptor],
-            leavePublisher: Seq[ListenerDescriptor],
+            enterPublisher: Seq[String],
+            leavePublisher: Seq[String],
             enterOperations: Seq[OperationDescriptor],
             leaveOperations: Seq[OperationDescriptor]): Props = {
     Props(classOf[StateActor], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)

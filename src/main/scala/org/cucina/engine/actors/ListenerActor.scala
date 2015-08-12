@@ -7,21 +7,22 @@ import org.slf4j.LoggerFactory
 /**
  * Created by levinev on 11/08/2015.
  */
+sealed trait ProcessEvent
 
-case class EnterEvent(processContext: ProcessContext)
+case class EnterEvent(processContext: ProcessContext) extends ProcessEvent
 
-case class LeaveEvent(processContext: ProcessContext)
+case class LeaveEvent(processContext: ProcessContext) extends ProcessEvent
 
 trait ListenerActor
   extends Actor {
   def receive = {
-    case EnterEvent(pc) =>
-    case LeaveEvent(pc) =>
+    case EnterEvent(pc) => processEnter(pc)
+    case LeaveEvent(pc) => processLeave(pc)
   }
 
-  def processEnter(pc: ProcessContext)
+  def processEnter(pc: ProcessContext):Unit
 
-  def processLeave(pc: ProcessContext)
+  def processLeave(pc: ProcessContext):Unit
 }
 
 class LoggingListenerActor extends ListenerActor {
