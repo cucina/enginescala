@@ -1,5 +1,7 @@
 package org.cucina.engine.actors.support
 
+import java.util.concurrent.TimeoutException
+
 import akka.actor._
 import akka.util.Timeout
 import org.cucina.engine.definition.ProcessElementDescriptor
@@ -63,7 +65,7 @@ trait ActorFinder {
     cache.get(path) match {
       case s@Some(_) => s
       case None =>
-        LOG.info("Path:" + path)
+        LOG.info("Path:" + path + " for " + context.self)
         try {
           // TODO parameter for timeout?
           implicit val resolveTimeout = Timeout(500 millis)
@@ -78,10 +80,12 @@ trait ActorFinder {
               Some(actorRef)
           }
         } catch {
-          case e: ActorNotFound => {
+          case e: ActorNotFound =>
             LOG.warn("Failed to find actor by name '" + path + "'")
             None
-          }
+          case e:TimeoutException =>
+            LOG.warn("Timedout finding actor by name '" + path + "'", e)
+            None
         }
     }
   }
@@ -92,7 +96,7 @@ trait ActorFinder {
     val c = if (elementDescriptor.name == null) context actorOf props else context actorOf(props, elementDescriptor.name)
     require(c != null, "ActorRef cannot be null")
     context watch c
-    LOG.info("Create actor:" + c)
+    LOG.info("Created actor:" + c)
     c
   }
 }
