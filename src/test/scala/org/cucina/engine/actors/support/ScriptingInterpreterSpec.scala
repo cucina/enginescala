@@ -29,13 +29,12 @@ class ScriptingInterpreterSpec
         assert(si.execute("a.asInstanceOf[Int]*b.asInstanceOf[Int]", Map("a" -> Int.box(5), "b" -> Int.box(20))) == 100)
       }
       "get property" in {
-        println(My.getClass)
-        assert(si.execute("println(a); a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) == true)
+        assert(si.execute("import org.cucina.engine.actors.support._;println(a); a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) == true)
         assert(si.execute("a.asInstanceOf[My].name", Map("a" -> new My("Name"))) == "Name")
       }
       "set property" in {
-        assert(si.execute("a.name()==\"Name\"", Map("a" -> new My("Name"))) == true)
-        assert(si.execute("function My(name){this.name=name};b=new My(\"New\"); print(b.name); b.name", Map("a" -> new My("Name"))) == "New")
+        assert(si.execute("a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) == true)
+        assert(si.execute("val b=new My(\"New\"); print(b.name); b.name", Map("a" -> new My("Name"))) == "New")
       }
     }
   }
