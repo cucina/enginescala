@@ -1,6 +1,6 @@
 package org.cucina.engine
 
-import akka.actor.{ActorRef, Terminated, Props, Actor}
+import akka.actor._
 import org.cucina.engine.actors._
 import org.cucina.engine.definition.parse.DefinitionParser
 import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
@@ -40,6 +40,11 @@ case class ProcessFailure(cause: String)
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
+
+/*
+  val actor = context.system.actorOf(Props[DefaultDeadLetterHandlerActor])
+  context.system.eventStream.subscribe(actor, [DeadLetter])
+*/
 
   lazy val localDefinitionRegistry = {
     if (definitionRegistry == null) {
