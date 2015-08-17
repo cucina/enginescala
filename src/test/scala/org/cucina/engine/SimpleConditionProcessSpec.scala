@@ -22,7 +22,7 @@ with MockitoSugar {
     TestKit.shutdownActorSystem(system)
   }
 
-  val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", parameter = "chx1")))))
+  val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", parameter = "/user/chx1")))))
   val endState = StateDescriptor("end", List())
   val simpleStates = List(startState, endState)
   val domainObject = new Object
@@ -39,7 +39,7 @@ with MockitoSugar {
     val chx1 = system.actorOf(Props[BlankOperationActor], "chx1")
     println("CHX1 " + chx1)
     "added and ran simple" should {
-      val guardian = system.actorOf(ProcessGuardian.props())
+      val guardian = system.actorOf(ProcessGuardian.props(), "pg")
       guardian ! AddDefinition(str)
 
       "execute transition" in {
