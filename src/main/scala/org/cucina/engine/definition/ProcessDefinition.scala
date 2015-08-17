@@ -22,12 +22,14 @@ trait ProcessElementDescriptor {
   }
 }
 
-case class OperationDescriptor(name: String, className: Option[String] = Some(classOf[DelegatingStackActor].getName), arguments: Option[List[String]] = None)
-  extends ProcessElementDescriptor
-
-case class CheckDescriptor(name: String, className: Option[String] = None, actorRef:String)
+case class OperationDescriptor(name: String, className: Option[String] = None, parameter: String = null)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[DelegatingStackActor].getName)), actorRef)
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
+}
+
+case class CheckDescriptor(name: String, className: Option[String] = None, parameter: String = null)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
 }
 
 case class TransitionDescriptor(name: String, output: String,

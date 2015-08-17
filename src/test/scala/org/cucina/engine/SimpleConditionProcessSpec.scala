@@ -22,7 +22,7 @@ with MockitoSugar {
     TestKit.shutdownActorSystem(system)
   }
 
-  val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", actorRef = "chx1")))))
+  val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", parameter = "chx1")))))
   val endState = StateDescriptor("end", List())
   val simpleStates = List(startState, endState)
   val domainObject = new Object

@@ -20,24 +20,47 @@ class ScriptingInterpreterSpec
     for (sce <- screng) {
       println(sce.getNames + " threading=" + sce.getParameter("THREADING"))
     }
-    "using ecma" should {
+    "using scala" should {
       val si = new ScriptingInterpreter
       "eval true" in {
-        assert(si.execute("println(a);a==\"10\"", Map("a" -> "10")) == true)
+        si.interpret("println(a);a==\"10\"", Map("a" -> "10")) match {
+          case Some(a) => assert(a == true)
+          case None => fail
+        }
       }
       "eval 100" in {
-        assert(si.execute("a.asInstanceOf[Int]*b.asInstanceOf[Int]", Map("a" -> Int.box(5), "b" -> Int.box(20))) == 100)
+        si.interpret("a.asInstanceOf[Int]*b.asInstanceOf[Int]", Map("a" -> Int.box(5), "b" -> Int.box(20))) match {
+          case Some(a) => assert(a == 100)
+          case None => fail
+        }
       }
       "get property" in {
-        assert(si.execute("import org.cucina.engine.actors.support._;println(a); a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) == true)
-        assert(si.execute("a.asInstanceOf[My].name", Map("a" -> new My("Name"))) == "Name")
+        si.interpret("import org.cucina.engine.actors.support._;println(a); a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) match {
+          case Some(a) => assert(a == true)
+          case None => fail
+        }
+        si.interpret("a.asInstanceOf[My].name", Map("a" -> new My("Name"))) match {
+          case Some(a) => assert(a == "Name")
+          case None => fail
+        }
       }
       "set property" in {
-        assert(si.execute("a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) == true)
-        assert(si.execute("val b=new My(\"New\"); print(b.name); b.name", Map("a" -> new My("Name"))) == "New")
+        si.interpret("a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name")))  match {
+          case Some(a) => assert(a == true)
+          case None => fail
+        }
+        si.interpret("val b=new My(\"New\"); b.name", Map("a" -> new My("Name")))  match {
+          case Some(a) => assert(a == "New")
+          case None => fail
+        }
+        val a = new MyR("Name")
+        si.interpret("a.asInstanceOf[MyR].name= \"New\"; print(a.asInstanceOf[MyR].name); \"ignore\"", Map("a" -> a))
+        assert(a.name == "New")
       }
     }
   }
 }
 
 case class My(val name: String)
+
+case class MyR(var name: String)
