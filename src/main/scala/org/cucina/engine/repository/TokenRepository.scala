@@ -13,9 +13,10 @@ case class FindByDomain(op:TokenRequest, requestor:ActorRef)
 case class StoreToken(token:Token)
 
 trait TokenRepository extends Actor {
-private val LOG = LoggerFactory.getLogger(getClass)
+protected val LOG = LoggerFactory.getLogger(getClass)
   def receive = {
     case FindByDomain(op, requestor) =>
+      LOG.info("Finding for:" + op)
       findByDomain(op) match {
         case None =>
           LOG.info("Failed to find")

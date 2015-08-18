@@ -8,7 +8,16 @@ import org.cucina.engine.actors._
  * @author levinev
  */
 
-case class ProcessDefinition(val states: Seq[StateDescriptor], val startState: String, description: String, val id: String)
+case class ProcessDefinition(val states: Seq[StateDescriptor], val startState: String, description: String, val id: String) {
+  def listTransitions(stateId: String): Option[Seq[String]] = {
+    states.find(_.name == stateId) match {
+      case Some(s) =>
+        Some(s.transitions.map((td) => td.name))
+      case None =>
+        None
+    }
+  }
+}
 
 trait ProcessElementDescriptor {
   val name: String
@@ -20,16 +29,23 @@ trait ProcessElementDescriptor {
     val sb = new StringBuilder()
     sb.append("className='").append(className).append("' name='").append(name).append("'").toString()
   }
+
+  def getStackElementClass(classN: String): Class[_] = {
+    val clazz = Class.forName(classN)
+    if (!classOf[StackElementActor].isAssignableFrom(clazz)) throw new IllegalArgumentException("className (" + classN
+      + ") provided should be of a class extending StackElementActor")
+    clazz
+  }
 }
 
 case class OperationDescriptor(name: String, className: Option[String] = None, parameter: String = null)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
+  override def props: Props = Props(getStackElementClass(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
 }
 
 case class CheckDescriptor(name: String, className: Option[String] = None, parameter: String = null)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
+  override def props: Props = Props(getStackElementClass(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
 }
 
 case class TransitionDescriptor(name: String, output: String,

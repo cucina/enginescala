@@ -46,6 +46,8 @@ with MockitoSugar {
         val obj = new Object
         guardian ! StartProcess("simple", obj, "tr1")
         expectMsg(obj)
+        guardian ! GetAvailableTransitions(obj, "simple")
+        expectMsg(List())
       }
     }
   }

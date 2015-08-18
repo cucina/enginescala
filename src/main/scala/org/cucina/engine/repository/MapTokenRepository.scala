@@ -17,5 +17,6 @@ class MapTokenRepository extends TokenRepository {
 
   def store(token:Token) = {
     map += (token.domainObject, token.processDefinition) -> token
+    LOG.info("Map:" + map)
   }
 }

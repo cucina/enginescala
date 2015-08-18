@@ -12,14 +12,14 @@ class ProcessDefinitionSpec
   with MockitoSugar {
 
   "ProcessDefinitionSpec" when {
+    val tr1 = new TransitionDescriptor("tr1", "end")
+    val states = List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List()))
+    val definition = new ProcessDefinition(states, "start", "fake", "fake")
     "serialized" should {
       "produce json" in {
         import spray.json._
         import DefinitionProtocol._
 
-        val tr1 = new TransitionDescriptor("tr1", "end")
-        val states = List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List()))
-        val definition = new ProcessDefinition(states, "start", "fake", "fake")
 
         val json = definition.toJson
         val str = json.compactPrint
@@ -28,6 +28,26 @@ class ProcessDefinitionSpec
         val defin = pjson.convertTo[ProcessDefinition]
         println(defin)
         assert("start"== defin.startState)
+      }
+    }
+    "listTransitions" should {
+      "return one " in {
+        definition.listTransitions("start") match {
+          case Some(s) => assert(s.head == "tr1")
+          case None => fail
+        }
+      }
+      "return None " in {
+        definition.listTransitions("startx") match {
+          case Some(_) => fail
+          case None =>
+        }
+      }
+      "return empty" in {
+        definition.listTransitions("end") match {
+          case Some(s) => assert(s.isEmpty)
+          case None => fail
+        }
       }
     }
   }

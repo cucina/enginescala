@@ -2,6 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Props, ActorContext, ActorRef, Actor}
 import org.cucina.engine.ProcessContext
+import org.slf4j.LoggerFactory
 
 /**
  * Created by levinev on 28/07/2015.
@@ -9,7 +10,9 @@ import org.cucina.engine.ProcessContext
 
 // TODO have a single class using a type of event in constructor
 
-class EventPublisher(val listeners: Seq[String], buildEvent: ProcessContext => ProcessEvent) extends StackElementActor {
+class EventPublisher(val listeners: Seq[String], buildEvent: ProcessContext => ProcessEvent)
+  extends StackElementActor {
+  private val LOG = LoggerFactory.getLogger(getClass)
   lazy val listActors: Seq[ActorRef] = {
     val seq: Seq[Option[ActorRef]] = listeners.map(l => findActor(l))
     for (Some(ar) <- seq) yield ar
@@ -20,6 +23,7 @@ class EventPublisher(val listeners: Seq[String], buildEvent: ProcessContext => P
   }
 
   def execute(processContext: ProcessContext): StackElementExecuteResult = {
+    LOG.info("Logging:" + processContext)
     listActors.foreach(l => l ! buildEvent(processContext))
     new StackElementExecuteResult(true, processContext)
   }

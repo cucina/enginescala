@@ -41,7 +41,7 @@ class StateActor(name: String,
   def receive = {
     case EnterState(tr, pc) =>
       pc.token.stateId = name
-      LOG.info("entering stateId=" + name)
+      LOG.info("Entering stateId=" + name)
       LOG.info("Calling " + enterStack.head)
       transActors.get(tr) match {
         case Some(t) => enterStack.head forward new StackRequest(pc, enterStack.tail :+ t)
@@ -64,7 +64,10 @@ class StateActor(name: String,
       if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "State '" + name + "' should be a terminal actor in the stack")
       else {
         LOG.info("Entering state=" + name)
-        enterStack.head forward new StackRequest(pc, enterStack.tail)
+        var lpc = pc
+        lpc.token.stateId = name
+        LOG.info("Calling " + enterStack.head + " with " + lpc)
+        enterStack.head forward new StackRequest(lpc, enterStack.tail)
       }
 
     case Terminated(child) =>

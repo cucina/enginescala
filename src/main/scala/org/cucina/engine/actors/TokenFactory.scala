@@ -7,13 +7,13 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.actor.ActorRef
-import org.cucina.engine.{ClientContainer, ExecuteFailed, ProcessContext}
+import org.cucina.engine.{ProcessFailure, ClientContainer, ExecuteFailed, ProcessContext}
 
 trait TokenRequest {
   val processDefinition: ProcessDefinition
   val domainObject: Object
-  val transitionId: String
-  val parameters: Map[String, Object]
+  //  val transitionId: String
+  //  val parameters: Map[String, Object]
   val client: ActorRef
 }
 
@@ -21,6 +21,9 @@ case class StartToken(processDefinition: ProcessDefinition, domainObject: Object
   extends TokenRequest with ClientContainer
 
 case class MoveToken(processDefinition: ProcessDefinition, domainObject: Object, transitionId: String, parameters: Map[String, Object], client: ActorRef)
+  extends TokenRequest with ClientContainer
+
+case class GetTransitions(processDefinition: ProcessDefinition, domainObject: Object, client: ActorRef)
   extends TokenRequest with ClientContainer
 
 case class TokenNotFound(op: TokenRequest)
@@ -45,7 +48,9 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
       require(mt.transitionId != null, "The 'transitionId' cannot be null.")
       // call to tokenRepository to find an existing one for the object
       tokenRepository forward FindByDomain(mt, me)
-
+    case gt: GetTransitions =>
+      require(gt.domainObject != null, "The 'domainObject' cannot be null.")
+      tokenRepository forward FindByDomain(gt, me)
     case TokenResult(token: Token, op: TokenRequest) =>
       op match {
         case st: StartToken =>
@@ -56,6 +61,18 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
         case st: MoveToken =>
           LOG.info("Found existing token:" + token)
           moveProcess(token, st)
+        case st: GetTransitions =>
+          LOG.info("Found existing token:" + token)
+          require(token != null, "Token is null")
+          require(token.stateId != null, "Token's state is null")
+          require(st.processDefinition != null, "Process definition is null")
+          st.processDefinition.listTransitions(token.stateId) match {
+            case Some(s) =>
+              st.client ! s
+            case None =>
+              sender ! ExecuteFailed(st.client, "Failed to find state '" + token.stateId
+                + "' in the current definition of process for domainObject '" + st.domainObject + "'")
+          }
       }
 
     case TokenNotFound(op: TokenRequest) =>
@@ -66,8 +83,12 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
         case st: MoveToken =>
           LOG.info("Token not found for " + st)
           sender ! ExecuteFailed(st.client, "No token found for " + st)
+        case other =>
+          LOG.warn("Unhandled original:" + other)
+          sender ! ProcessFailure("Unhandled original:" + other)
       }
-    case t:StoreToken =>
+    case t: StoreToken =>
+      LOG.info("Storing " + t)
       tokenRepository ! t
 
     case e@_ => LOG.info("Not handling:" + e)

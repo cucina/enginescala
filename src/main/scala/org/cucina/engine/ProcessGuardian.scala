@@ -37,14 +37,16 @@ case class NestedTuple(originalRequest: Object, client: ActorRef) extends Client
 
 case class ProcessFailure(cause: String)
 
+case class GetAvailableTransitions(domainObject: Object, processDefinitionName: String = null)
+
 class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactory: ActorRef = null, tokenFactory: ActorRef = null)
   extends Actor with DefinitionParser {
   private[this] val LOG = LoggerFactory.getLogger(getClass)
 
-/*
-  val actor = context.system.actorOf(Props[DefaultDeadLetterHandlerActor])
-  context.system.eventStream.subscribe(actor, [DeadLetter])
-*/
+  /*
+    val actor = context.system.actorOf(Props[DefaultDeadLetterHandlerActor])
+    context.system.eventStream.subscribe(actor, [DeadLetter])
+  */
 
   lazy val localDefinitionRegistry = {
     if (definitionRegistry == null) {
@@ -96,6 +98,9 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
         case e: MakeTransition =>
           LOG.info("Making transition:" + e)
           localTokenFactory ! MoveToken(definition, e.domainObject, e.transitionId, e.parameters.getOrElse(new HashMap[String, Object]), cause.client)
+        case e: GetAvailableTransitions =>
+          LOG.info("Getting transitions:" + e)
+          localTokenFactory ! GetTransitions(definition, e.domainObject, cause.client)
         case _ =>
           LOG.warn("Unknown originalRequest:" + cause.originalRequest)
           cause.client ! "Unknown originalRequest:" + cause.originalRequest
@@ -108,8 +113,14 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
       LOG.info("Completed for " + pc)
       localTokenFactory ! StoreToken(pc.token)
       pc.client ! pc.token.domainObject
-    case ExecuteFailed(pc, error) =>
-      pc ! ProcessFailure("Whoops:" + error)
+    case ExecuteFailed(client, error) =>
+      client ! ProcessFailure("Whoops:" + error)
+    case e@GetAvailableTransitions(domain, pdn) =>
+      // TODO implement for a case when an object is a subject of only one process
+      if (pdn == null) {}
+      else {
+        localDefinitionRegistry ! FindDefinition(pdn, new NestedTuple(e, sender))
+      }
     case Terminated(child) =>
       // TODO handle by restarting it
       LOG.warn("Actor died " + child)

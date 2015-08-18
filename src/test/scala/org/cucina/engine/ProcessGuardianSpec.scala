@@ -48,7 +48,6 @@ with MockitoSugar {
 
     "received definition" should {
       "add to registry" in {
-
         val pi = system.actorOf(ProcessGuardian.props(system.actorOf(Props(new Actor {
           def receive = {
             case e: AddProcessDefinition =>
@@ -62,6 +61,7 @@ with MockitoSugar {
         expectMsg(domaiObject)
       }
     }
+
     "received Start" should {
       "call definitionregistry" in {
         val pi = system.actorOf(ProcessGuardian.props(system.actorOf(Props(new Actor {
@@ -90,6 +90,20 @@ with MockitoSugar {
       }
     }
 
+    "received GetAvailableTransitions" should {
+      "call definitionregistry" in {
+        val pi = system.actorOf(ProcessGuardian.props(system.actorOf(Props(new Actor {
+          def receive = {
+            case t: FindDefinition =>
+              println("FindDefinition " + t)
+              me ! "OKI"
+          }
+        })), blankActor, blankActor))
+        pi ! GetAvailableTransitions(domaiObject, "fake")
+        expectMsg("OKI")
+      }
+    }
+
     "processDefinition" should {
       "call tokenFactory with start" in {
         val pi = system.actorOf(ProcessGuardian.props(blankActor, blankActor, system.actorOf(Props(new Actor {
@@ -109,7 +123,7 @@ with MockitoSugar {
         val pi = system.actorOf(ProcessGuardian.props(blankActor, blankActor, system.actorOf(Props(new Actor {
           def receive = {
             case t: MoveToken =>
-              println("StartToken " + t)
+              println("MoveToken " + t)
               require(t.client == me)
               require(t.processDefinition == definition)
               require(t.domainObject == domaiObject)
@@ -117,6 +131,20 @@ with MockitoSugar {
           }
         }))))
         pi ! ProcessDefinitionWrap(definition, NestedTuple(MakeTransition("fake", domaiObject, null, None), me))
+        expectMsg("OKI")
+      }
+      "call tokenFactory with getTransitions" in {
+        val pi = system.actorOf(ProcessGuardian.props(blankActor, blankActor, system.actorOf(Props(new Actor {
+          def receive = {
+            case t: GetTransitions =>
+              println("GetTransitions " + t)
+              require(t.client == me)
+              require(t.processDefinition == definition)
+              require(t.domainObject == domaiObject)
+              me ! "OKI"
+          }
+        }))))
+        pi ! ProcessDefinitionWrap(definition, NestedTuple(GetAvailableTransitions(domaiObject, "fake"), me))
         expectMsg("OKI")
       }
     }

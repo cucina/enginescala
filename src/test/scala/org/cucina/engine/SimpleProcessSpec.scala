@@ -48,11 +48,15 @@ with MockitoSugar {
           case ProcessFailure(_) => // good
           case f@_ => fail("Unexpected result:" + f)
         }
+        guardian ! GetAvailableTransitions(domainObject, "simple")
+        expectMsg(List("tr1"))
       }
       "execute transition" in {
         val obj = new Object
         guardian ! StartProcess("simple", obj, "tr1")
         expectMsg(obj)
+        guardian ! GetAvailableTransitions(obj, "simple")
+        expectMsg(List())
       }
     }
   }
