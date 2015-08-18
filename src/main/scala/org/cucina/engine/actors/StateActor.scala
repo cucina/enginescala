@@ -41,12 +41,16 @@ class StateActor(name: String,
   def receive = {
     case EnterState(tr, pc) =>
       pc.token.stateId = name
-      LOG.info("Entering stateId=" + name)
+      LOG.info("Entering stateId=" + name + " with transition " + tr)
       LOG.info("Calling " + enterStack.head)
-      transActors.get(tr) match {
-        case Some(t) => enterStack.head forward new StackRequest(pc, enterStack.tail :+ t)
-        case None => enterStack.head forward new StackRequest(pc, enterStack.tail)
-      }
+      if (tr == null) enterStack.head forward new StackRequest(pc, enterStack.tail)
+      else
+        transActors.get(tr) match {
+          case Some(t) => enterStack.head forward new StackRequest(pc, enterStack.tail :+ t)
+          case None =>
+            LOG.warn("Attempted to enter provding invalid exit transition name '" + tr + "'")
+            sender ! ExecuteFailed(pc.client, "Attempted to enter providing invalid exit transition name '" + tr + "'")
+        }
 
     case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {

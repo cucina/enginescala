@@ -2,7 +2,7 @@ package org.cucina.engine
 
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.actors.BlankOperationActor
+import org.cucina.engine.actors.{ScriptExecuteActor, BlankOperationActor}
 import org.cucina.engine.definition._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -22,7 +22,10 @@ with MockitoSugar {
     TestKit.shutdownActorSystem(system)
   }
 
-  val startState = StateDescriptor("start", List(TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", parameter = "/user/chx1")))))
+  val tr1 = TransitionDescriptor("tr1", "end", checks = List(CheckDescriptor("ch1", parameter = "/user/chx1")))
+  val tr2 = TransitionDescriptor("tr2", "end", checks = List(CheckDescriptor("ch2", Some(classOf[ScriptExecuteActor].getName), "false")))
+  val transdesc = List(tr1, tr2)
+  val startState = StateDescriptor("start", transdesc)
   val endState = StateDescriptor("end", List())
   val simpleStates = List(startState, endState)
   val domainObject = new Object
@@ -42,12 +45,24 @@ with MockitoSugar {
       val guardian = system.actorOf(ProcessGuardian.props(), "pg")
       guardian ! AddDefinition(str)
 
-      "execute transition" in {
+      "execute transition tr1" in {
         val obj = new Object
         guardian ! StartProcess("simple", obj, "tr1")
         expectMsg(obj)
         guardian ! GetAvailableTransitions(obj, "simple")
         expectMsg(List())
+      }
+      "execute transition tr2" in {
+        val obj = new Object
+        guardian ! StartProcess("simple", obj, "tr2")
+        expectMsg(obj)
+        guardian ! GetAvailableTransitions(obj, "simple")
+        expectMsg(List())
+      }
+      "execute transition tr3" in {
+        val obj = new Object
+        guardian ! StartProcess("simple", obj, "tr3")
+        expectMsg(ProcessFailure(_))
       }
     }
   }

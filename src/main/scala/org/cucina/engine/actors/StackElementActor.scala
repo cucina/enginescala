@@ -28,6 +28,7 @@ trait StackElementActor
 
   def receiveStack(implicit context: ActorContext): Receive = {
     case StackRequest(pc, stack) => {
+      LOG.info("Executing:" + pc + " in " + stack)
       execute(pc) match {
         case StackElementExecuteResult(false, pc, message, throwable) => sender ! ExecuteFailed(pc.client, message)
         case _ =>
