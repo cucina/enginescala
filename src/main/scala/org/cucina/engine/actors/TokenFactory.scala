@@ -80,7 +80,7 @@ class TokenFactory(tokenRepository: ActorRef) extends Actor {
         case st: StartToken =>
           LOG.info("Creating new token")
           startProcess(Token(st.domainObject, st.processDefinition), st)
-        case st: MoveToken =>
+        case st: ClientContainer =>
           LOG.info("Token not found for " + st)
           sender ! ExecuteFailed(st.client, "No token found for " + st)
         case other =>

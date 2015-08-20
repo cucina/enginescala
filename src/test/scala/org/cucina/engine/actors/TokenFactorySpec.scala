@@ -93,7 +93,7 @@ with MockitoSugar {
         val pi = system.actorOf(TokenFactory.props(tokenRepo))
         pi ! GetTransitions(defi, new Object, self)
         expectMsgPF() {
-          case st:ProcessFailure =>
+          case st:ExecuteFailed =>
             println(st)
         }
       }

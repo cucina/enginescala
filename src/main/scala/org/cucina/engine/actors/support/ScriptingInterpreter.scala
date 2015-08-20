@@ -34,7 +34,9 @@ class ScriptingInterpreter {
       }
 
       engine.setBindings(binding, ScriptContext.ENGINE_SCOPE)
-      Some(engine.eval(expression))
+      val r = engine.eval(expression)
+      LOG.info("Result of evaluation '" + r + "'")
+      Some(r)
     } catch {
       case e:Throwable =>
         LOG.error("Failed executong script:" + e)

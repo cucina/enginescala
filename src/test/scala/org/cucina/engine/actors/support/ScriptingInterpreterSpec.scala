@@ -21,20 +21,27 @@ class ScriptingInterpreterSpec
       println(sce.getNames + " threading=" + sce.getParameter("THREADING"))
     }
     "using scala" should {
-      val si = new ScriptingInterpreter
       "eval true" in {
+        val si = new ScriptingInterpreter
+        val start = System.currentTimeMillis()
         si.interpret("println(a);a==\"10\"", Map("a" -> "10")) match {
           case Some(a) => assert(a == true)
           case None => fail
         }
+        println("time:" + (System.currentTimeMillis() - start))
       }
       "eval 100" in {
+        val si = new ScriptingInterpreter
+        val start = System.currentTimeMillis()
         si.interpret("a.asInstanceOf[Int]*b.asInstanceOf[Int]", Map("a" -> Int.box(5), "b" -> Int.box(20))) match {
           case Some(a) => assert(a == 100)
           case None => fail
         }
+        println("time:" + (System.currentTimeMillis() - start))
       }
       "get property" in {
+        val si = new ScriptingInterpreter
+        val start = System.currentTimeMillis()
         si.interpret("import org.cucina.engine.actors.support._;println(a); a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name"))) match {
           case Some(a) => assert(a == true)
           case None => fail
@@ -43,9 +50,12 @@ class ScriptingInterpreterSpec
           case Some(a) => assert(a == "Name")
           case None => fail
         }
+        println("time:" + (System.currentTimeMillis() - start))
       }
       "set property" in {
-        si.interpret("a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name")))  match {
+        val si = new ScriptingInterpreter
+        val start = System.currentTimeMillis()
+        si.interpret("import org.cucina.engine.actors.support._;a.asInstanceOf[My].name==\"Name\"", Map("a" -> new My("Name")))  match {
           case Some(a) => assert(a == true)
           case None => fail
         }
@@ -56,6 +66,7 @@ class ScriptingInterpreterSpec
         val a = new MyR("Name")
         si.interpret("a.asInstanceOf[MyR].name= \"New\"; print(a.asInstanceOf[MyR].name); \"ignore\"", Map("a" -> a))
         assert(a.name == "New")
+        println("time:" + (System.currentTimeMillis() - start))
       }
     }
   }

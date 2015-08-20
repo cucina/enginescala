@@ -73,6 +73,10 @@ class ProcessGuardian(definitionRegistry: ActorRef = null, processInstanceFactor
     }
   }
 
+  override def postStop = {
+    LOG.info("Stopped")
+  }
+
   override def preStart = {
     context watch localDefinitionRegistry
     context watch localProcessInstanceFactory

@@ -32,8 +32,10 @@ trait StackElementActor
       execute(pc) match {
         case StackElementExecuteResult(false, pc, message, throwable) => sender ! ExecuteFailed(pc.client, message)
         case _ =>
-          if (!stack.isEmpty)
+          if (!stack.isEmpty) {
+            LOG.info("Forwarding to " + stack.head)
             stack.head forward StackRequest(pc, stack.tail)
+          }
           else sender ! ExecuteComplete(pc)
       }
     }
