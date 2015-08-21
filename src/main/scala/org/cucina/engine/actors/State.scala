@@ -22,23 +22,10 @@ class State(name: String,
                  leaveListeners: Seq[String] = List(),
                  enterOperations: Seq[OperationDescriptor] = Nil,
                  leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends Actor with ActorFinder {
-  val LOG = LoggerFactory.getLogger(getClass)
-  lazy val enterOpActors: Seq[ActorRef] = {
-    enterOperations.map(op => createActor(op))
-  }
-  lazy val leaveOpActors: Seq[ActorRef] = {
-    leaveOperations.map(op => createActor(op))
-  }
-  lazy val transActors: Map[String, ActorRef] = {
-    transitions.map(tr => tr.name -> createActor(tr)).toMap
-  }
-  lazy val enterPubActor: ActorRef = createActor(new EnterPublisherDescriptor(enterListeners))
-  lazy val leavePubActor: ActorRef = createActor(new LeavePublisherDescriptor(leaveListeners))
-  lazy val enterStack: Seq[ActorRef] = enterOpActors :+ enterPubActor
-  lazy val leaveStack: Seq[ActorRef] = leaveOpActors :+ leavePubActor
+  extends AbstractState(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
+  private val LOG = LoggerFactory.getLogger(getClass)
 
-  def receive = {
+  override def receiveLocal = {
     case EnterState(tr, pc) =>
       pc.token.stateId = name
       LOG.info("Entering stateId=" + name + " with transition " + tr)
@@ -64,20 +51,15 @@ class State(name: String,
           val stack = leaveStack :+ a
           stack.head forward new StackRequest(pc, stack.tail)
       }
-    case StackRequest(pc, callerstack) =>
-      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "State '" + name + "' should be a terminal actor in the stack")
-      else {
-        LOG.info("Entering state=" + name)
-        var lpc = pc
-        lpc.token.stateId = name
-        LOG.info("Calling " + enterStack.head + " with " + lpc)
-        enterStack.head forward new StackRequest(lpc, enterStack.tail)
-      }
 
-    case Terminated(child) =>
-      LOG.warn("A child is dead:" + child)
-    // TODO handle and revive
     case e@_ => LOG.warn("Unhandled " + e)
+  }
+
+  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {
+    var lpc = pc
+    lpc.token.stateId = name
+    LOG.info("Calling " + enterStack.head + " with " + lpc)
+    enterStack.head forward new StackRequest(lpc, enterStack.tail)
   }
 
   private def canLeave(pc: ProcessContext): Boolean = {
