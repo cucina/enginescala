@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
  * Created by levinev on 14/08/2015.
  */
 
-class ScriptingInterpreterSpec
+class ScriptingInterpreterSpecNo
   extends WordSpecLike
   with Matchers {
   //settings.usejavacp.value = true

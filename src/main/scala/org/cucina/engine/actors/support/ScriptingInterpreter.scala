@@ -18,9 +18,9 @@ class ScriptingInterpreter {
   // TODO optional parameter to identify engine type
   val engine = new ScriptEngineManager(this.getClass.getClassLoader).getEngineByName("scala")
   // TODO this to be done only once per JVM
-  val settings = engine.asInstanceOf[scala.tools.nsc.interpreter.IMain].settings
+ /* val settings = engine.asInstanceOf[scala.tools.nsc.interpreter.IMain].settings
   settings.embeddedDefaults[ScriptingInterpreter]
-  settings.usejavacp.value = true
+  settings.usejavacp.value = true*/
 
   //  println(engine.ge)
 
