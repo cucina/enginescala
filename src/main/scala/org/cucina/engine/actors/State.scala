@@ -16,7 +16,7 @@ case class EnterState(transitionName: String, processContext: ProcessContext)
 
 case class LeaveState(transitionName: String, processContext: ProcessContext)
 
-class StateActor(name: String,
+class State(name: String,
                  transitions: Seq[TransitionDescriptor],
                  enterListeners: Seq[String] = List(),
                  leaveListeners: Seq[String] = List(),
@@ -85,12 +85,12 @@ class StateActor(name: String,
   }
 }
 
-object StateActor {
+object State {
   def props(name: String, transitions: Seq[TransitionDescriptor],
             enterPublisher: Seq[String],
             leavePublisher: Seq[String],
             enterOperations: Seq[OperationDescriptor],
             leaveOperations: Seq[OperationDescriptor]): Props = {
-    Props(classOf[StateActor], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
+    Props(classOf[State], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
   }
 }

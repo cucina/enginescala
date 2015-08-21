@@ -53,7 +53,7 @@ case class TransitionDescriptor(name: String, output: String,
                                 checks: Seq[CheckDescriptor] = List(),
                                 className: Option[String] = None) extends ProcessElementDescriptor {
   /// Factory method, allows to plugin allows to plugin alternative transition implementations
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[TransitionActor].getName)), name, output, leaveOperations, checks)
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Transition].getName)), name, output, leaveOperations, checks)
 }
 
 case class StateDescriptor(name: String,
@@ -64,7 +64,7 @@ case class StateDescriptor(name: String,
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[StateActor].getName)), name, transitions,
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[State].getName)), name, transitions,
     enterListeners.get, leaveListeners.get,
     enterOperations.get, leaveOperations.get)
 }

@@ -12,7 +12,7 @@ import scala.concurrent.duration.DurationInt
 /**
  * Created by levinev on 28/07/2015.
  */
-class StateActorSpec extends TestKit(ActorSystem("cucina-test"))
+class StateSpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
 with Matchers
@@ -33,7 +33,7 @@ with MockitoSugar {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(StateActor.props("state", transitions,
+          val actorRef = system.actorOf(State.props("state", transitions,
             List(), List(), enterOperations, leaveOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {

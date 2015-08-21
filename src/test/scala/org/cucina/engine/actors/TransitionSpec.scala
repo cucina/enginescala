@@ -12,7 +12,7 @@ import scala.concurrent.duration.DurationInt
 /**
  * Created by levinev on 04/08/2015.
  */
-class TransitionActorSpec extends TestKit(ActorSystem("cucina-test"))
+class TransitionSpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
 with Matchers
@@ -33,7 +33,7 @@ with MockitoSugar {
     "received StackRequest" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(TransitionActor.props("transition", "state", leaveOperations, checks))
+          val actorRef = system.actorOf(Transition.props("transition", "state", leaveOperations, checks))
           actorRef ! new StackRequest(processContext, List())
           processContext.parameters += ("OutState" -> "")
           actorRef ! new StackRequest(processContext, List())

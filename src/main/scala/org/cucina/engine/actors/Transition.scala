@@ -14,7 +14,7 @@ case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescrip
 
 case class CheckFailed(checkName: String, reason: String)
 
-class TransitionActor(name: String, output: String,
+class Transition(name: String, output: String,
                       leaveOperations: Seq[OperationDescriptor] = List(),
                       checks: Seq[CheckDescriptor] = List())
   extends Actor
@@ -64,8 +64,8 @@ class TransitionActor(name: String, output: String,
   }
 }
 
-object TransitionActor {
+object Transition {
   def props(id: String, output: String, leaveOperations: Seq[OperationDescriptor], checks: Seq[CheckDescriptor]): Props = {
-    Props(classOf[TransitionActor], id, output, leaveOperations, checks)
+    Props(classOf[Transition], id, output, leaveOperations, checks)
   }
 }
