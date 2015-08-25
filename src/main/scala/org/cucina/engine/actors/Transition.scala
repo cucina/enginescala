@@ -1,6 +1,5 @@
 package org.cucina.engine.actors
 
-import akka.util.Timeout
 import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.{CheckDescriptor, OperationDescriptor}
@@ -10,9 +9,7 @@ import org.slf4j.LoggerFactory
 /**
  * @author levinev
  */
-case class CheckPassed(processContext: ProcessContext, remains: Seq[CheckDescriptor])
-
-case class CheckFailed(checkName: String, reason: String)
+case class DryCheck(pc:ProcessContext)
 
 class Transition(name: String, output: String,
                       leaveOperations: Seq[OperationDescriptor] = List(),
@@ -52,6 +49,7 @@ class Transition(name: String, output: String,
   // in context terminating it with output state
   def receive = {
     case StackRequest(pc, callerstack) =>
+      LOG.info("StackRequest")
       if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
       else {
         // build stack and execute it
@@ -59,6 +57,10 @@ class Transition(name: String, output: String,
         LOG.info("Stack=" + stack)
         stack.head forward new StackRequest(pc, stack.tail)
       }
+    case DryCheck(pc) =>
+      // only to run through checks
+      LOG.info("DryCheck " + this)
+      checkActors.head forward new StackRequest(pc, checkActors.tail)
     case e@_ =>
       LOG.warn("Unhandled:" + e)
   }

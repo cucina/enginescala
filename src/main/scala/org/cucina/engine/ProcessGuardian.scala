@@ -27,9 +27,11 @@ case class ProcessContext(token: Token, parameters: scala.collection.mutable.Map
 
 case class AddDefinition(string: String)
 
-case class ExecuteComplete(processContext: ProcessContext)
+trait ExecuteResult
 
-case class ExecuteFailed(client: ActorRef, failure: String) extends ClientContainer
+case class ExecuteComplete(processContext: ProcessContext) extends ExecuteResult
+
+case class ExecuteFailed(client: ActorRef, failure: String) extends ClientContainer with ExecuteResult
 
 case class ProcessDefinitionWrap(processDefinition: ProcessDefinition, nested: NestedTuple)
 

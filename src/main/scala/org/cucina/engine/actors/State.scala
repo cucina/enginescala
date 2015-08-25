@@ -41,7 +41,7 @@ class State(name: String,
 
     case LeaveState(tr, pc) =>
       if (!canLeave(pc)) {
-        sender ! ExecuteFailed(pc.client, "Cannot leave current Place '" + name +
+        sender ! ExecuteFailed(pc.client, "Cannot leave current State '" + name +
           "' since it is not the active place associated with the supplied ProcessContext")
       }
 

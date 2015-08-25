@@ -36,7 +36,10 @@ trait StackElementActor
             LOG.info("Forwarding to " + stack.head)
             stack.head forward StackRequest(pc, stack.tail)
           }
-          else sender ! ExecuteComplete(pc)
+          else {
+            LOG.info("Last actor in the stack, sender=" + sender)
+            sender ! ExecuteComplete(pc)
+          }
       }
     }
   }

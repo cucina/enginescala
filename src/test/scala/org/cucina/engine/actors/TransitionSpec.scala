@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.{ExecuteComplete, ProcessContext}
+import org.cucina.engine.{ExecuteFailed, ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -19,9 +19,6 @@ with Matchers
 with BeforeAndAfterAll
 with BeforeAndAfter
 with MockitoSugar {
-  val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), self)
-  val leaveOperations: Seq[OperationDescriptor] = List()
-  val checks: Seq[CheckDescriptor] = List()
 
   system.actorOf(Props[OutState], "state")
 
@@ -29,36 +26,101 @@ with MockitoSugar {
     TestKit.shutdownActorSystem(system)
   }
 
-  "TransitionActor" when {
-    "received StackRequest" should {
-      "return " in {
-        within(500 millis) {
-          val actorRef = system.actorOf(Transition.props("transition", "state", leaveOperations, checks))
-          actorRef ! new StackRequest(processContext, List())
-          processContext.parameters += ("OutState" -> "")
-          actorRef ! new StackRequest(processContext, List())
-          var oldin = ""
-          expectMsgPF() {
-            case ExecuteComplete(pc) =>
-              println(pc.parameters)
-              pc.parameters.get("OutState") match {
-                case Some(in:String) =>
-                  println("Hashcode=" + in)
-                  if (oldin == "") {
-                    oldin = in
-                  } else {
-                    assert(in == oldin)
-                  }
-                case e@_ =>
-                  fail("Unexpected:" + e)
-              }
 
-            case a@_ => println("Whopsie:" + a)
-          }
+  "received StackRequest" should {
+    "return " in {
+      within(1500 millis) {
+        val actorRef = system.actorOf(Transition.props("transition", "state", List(), List()), "tr")
+        val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
+        actorRef ! new StackRequest(processContext, List())
+        expectMsgPF() {
+          case ExecuteComplete(pc) =>
+            println("Not yet " + pc.parameters)
+        }
+        processContext.parameters += ("OutState" -> "")
+        actorRef ! new StackRequest(processContext, List())
+        expectMsgPF() {
+          case ExecuteComplete(pc) =>
+            pc.parameters.get("OutState") match {
+              case Some(in: String) =>
+                println("Hashcode=" + in)
+                assert(in != "")
+
+              case e@_ =>
+                fail("Unexpected:" + e)
+            }
+
+          case a@_ => println("Whopsie:" + a)
         }
       }
     }
   }
+
+  "received DryCheck" should {
+    "execute checks only" in {
+      within(3 seconds) {
+        val leaveOperations: Seq[OperationDescriptor] = OperationDescriptor("opf", Some(classOf[CheckFalse].getName)) :: Nil
+        val checks: Seq[CheckDescriptor] = CheckDescriptor("cht", Some(classOf[CheckTrue].getName)) :: Nil
+        val actorRef = system.actorOf(Transition.props("transition1", "state", leaveOperations, checks), "tr1")
+        println("dr1 " + actorRef)
+        val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
+        actorRef ! new DryCheck(processContext)
+        expectMsgPF() {
+          case ec@ExecuteComplete(processContext) =>
+            println("Completed dr1 " + processContext)
+          case ehh =>
+            fail("Expected ExecuteComplete instead of " + ehh)
+        }
+
+        println("Phase 1")
+      }
+      val leaveOperations: Seq[OperationDescriptor] = OperationDescriptor("opf2", Some(classOf[CheckFalse].getName)) :: Nil
+      val checks: Seq[CheckDescriptor] = CheckDescriptor("cht2", Some(classOf[CheckTrue].getName)) ::
+        CheckDescriptor("chf2", Some(classOf[CheckFalse].getName)) :: Nil
+      val actorRef = system.actorOf(Transition.props("transition2", "state", leaveOperations, checks), "tr2")
+      println("dr2 " + actorRef)
+      val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
+      actorRef ! new DryCheck(processContext)
+      expectMsgPF() {
+        case f@ExecuteFailed(c, s) =>
+          println("expected fail=" + f)
+        case ehh =>
+          fail("Expected ExecuteFailed instead of " + ehh)
+      }
+    }
+  }
+  /*
+    "received DryCheck2" should {
+      "execute failing checks only" in {
+        val leaveOperations: Seq[OperationDescriptor] = OperationDescriptor("opf2", Some(classOf[CheckFalse].getName)) :: Nil
+        val checks: Seq[CheckDescriptor] = CheckDescriptor("cht2", Some(classOf[CheckTrue].getName)) ::
+          CheckDescriptor("chf2", Some(classOf[CheckFalse].getName)) :: Nil
+        val actorRef = system.actorOf(Transition.props("transition2", "state", leaveOperations, checks), "tr2")
+        println("dr2 " + actorRef)
+        val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
+        actorRef ! new DryCheck(processContext)
+        expectMsgPF() {
+          case ExecuteFailed(c, s) =>
+            println("c=" + c)
+          case ehh =>
+            println(ehh)
+            fail("Expected ExecuteFailed")
+        }
+      }
+
+    }
+  */
+}
+
+class CheckTrue(obj: Object) extends StackElementActor {
+  def execute(processContext: ProcessContext): StackElementExecuteResult = {
+    println("CheckTrue")
+    StackElementExecuteResult(true, processContext)
+  }
+}
+
+class CheckFalse(obj: Object) extends StackElementActor {
+  def execute(processContext: ProcessContext): StackElementExecuteResult = StackElementExecuteResult(false, processContext)
 }
 
 class OutState extends Actor {
@@ -72,3 +134,5 @@ class OutState extends Actor {
       sender ! "OutState"
   }
 }
+
+

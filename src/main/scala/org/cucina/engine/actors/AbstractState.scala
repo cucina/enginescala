@@ -40,8 +40,8 @@ abstract class AbstractState(name: String,
 
   def receiveStack: Receive = {
     case StackRequest(pc, callerstack) =>
-      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "State of type "+getClass.getSimpleName
-        +" '" + name + "' should be a terminal actor in the stack")
+      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "State of type " + getClass.getSimpleName
+        + " '" + name + "' should be a terminal actor in the stack")
       else {
         LOG.info("Entering state=" + name)
         processStackRequest(pc, callerstack)
@@ -52,6 +52,6 @@ abstract class AbstractState(name: String,
     // TODO handle and revive
   }
 
-  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef])
+  def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef])
 
 }
