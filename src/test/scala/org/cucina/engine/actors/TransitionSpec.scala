@@ -112,27 +112,5 @@ with MockitoSugar {
   */
 }
 
-class CheckTrue(obj: Object) extends StackElementActor {
-  def execute(processContext: ProcessContext): StackElementExecuteResult = {
-    println("CheckTrue")
-    StackElementExecuteResult(true, processContext)
-  }
-}
-
-class CheckFalse(obj: Object) extends StackElementActor {
-  def execute(processContext: ProcessContext): StackElementExecuteResult = StackElementExecuteResult(false, processContext)
-}
-
-class OutState extends Actor {
-  def receive = {
-    case StackRequest(pc, stack) =>
-      println("Called with " + pc)
-      pc.parameters += ("OutState" -> this.hashCode().toString)
-      pc.client ! new ExecuteComplete(pc)
-    case e@_ =>
-      println(e)
-      sender ! "OutState"
-  }
-}
 
 

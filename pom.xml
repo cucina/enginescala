@@ -137,8 +137,10 @@
 						<phase>integration-test</phase>
 						<configuration>
 							<suffixes>SpecIT</suffixes>
+<!--
 							<reportsDirectory>${project.build.directory}/it-surefire-reports</reportsDirectory>
 							<htmlreporters>${project.build.directory}/it-surefire-reports</htmlreporters>
+-->
 						</configuration>
 					</execution>
 				</executions>

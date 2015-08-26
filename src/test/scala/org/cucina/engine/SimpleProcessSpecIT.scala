@@ -9,7 +9,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 /**
  * Created by vlevine on 07/08/15.
  */
-class SimpleProcessSpec extends TestKit(ActorSystem("cucina-test"))
+class SimpleProcessSpecIT extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
 with Matchers
