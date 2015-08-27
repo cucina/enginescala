@@ -1,16 +1,15 @@
 package org.cucina.engine.actors
 
-import akka.actor.Actor
-import org.cucina.engine.definition.{CheckDescriptor, OperationDescriptor}
+import akka.actor.{Props, ActorRef, Actor}
+import org.cucina.engine.definition.{ProcessElementDescriptor, TransitionDescriptor, CheckDescriptor, OperationDescriptor}
 import org.cucina.engine.{ExecuteFailed, ExecuteComplete, ProcessContext}
 
 /**
  * Created by vagrant on 8/25/15.
  */
-trait ProcessFixture {
-
+class BlankActor extends Actor {
+  def receive = Actor.ignoringBehavior
 }
-
 
 class CheckTrue(obj: Object) extends StackElementActor {
   def execute(processContext: ProcessContext): StackElementExecuteResult = {
@@ -60,3 +59,56 @@ class SucceedingTrans(name: String, output: String,
   }
 }
 
+class LocalState(name: String, transitions: Seq[TransitionDescriptor],
+                 listeners: Seq[String],
+                 enterOperations: Seq[OperationDescriptor],
+                 leaveOperations: Seq[OperationDescriptor])
+  extends State(name, transitions, listeners, enterOperations, leaveOperations) {
+  override def receive: Receive = {
+    case EnterState(_, pc) => {
+      pc.parameters += ("visited" -> "yes")
+      println("pc.parameters:" + pc.parameters)
+      sender ! new ExecuteComplete(pc)
+    }
+
+    case a@_ => {
+      println("Event:" + a)
+    }
+  }
+}
+
+class MockStackActor(name:String) extends StackElementActor {
+  def execute(processContext: ProcessContext): StackElementExecuteResult = {
+    println("Execute this:" + processContext)
+    return StackElementExecuteResult(true, processContext)
+  }
+}
+
+class MockStackDescritptor(val name: String) extends ProcessElementDescriptor {
+  val className: Option[String] = Some(classOf[MockStackActor].getName)
+}
+
+class MockTransitionActor(name: String, output: String, ops: Seq[OperationDescriptor], cx: Seq[CheckDescriptor]) extends Actor {
+  def receive = {
+    case e@_ => println("mocktr:" + e)
+  }
+}
+
+class MeListener(sink:ActorRef) extends Actor {
+  def receive = {
+    case LeaveEvent(_) =>
+      Thread sleep 100
+      sink ! "OK"
+  }
+}
+
+class Op1 extends StackElementActor {
+  def execute(pc: ProcessContext): StackElementExecuteResult = {
+    pc.parameters += ("Op1" -> "called")
+    new StackElementExecuteResult(true, processContext = pc)
+  }
+}
+
+class Op1Desc extends OperationDescriptor("op1", className = Some(classOf[Op1].getName)) {
+  override def props: Props = Props[Op1]
+}

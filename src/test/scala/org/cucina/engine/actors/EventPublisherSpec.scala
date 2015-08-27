@@ -51,10 +51,3 @@ with MockitoSugar {
   }
 }
 
-class MeListener(sink:ActorRef) extends Actor {
-  def receive = {
-    case LeaveEvent(_) =>
-      Thread sleep 100
-      sink ! "OK"
-  }
-}

@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import org.cucina.engine.actors.support.ActorFinder
+import com.googlecode.scalascriptengine.EvalCode
 
 import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition._
@@ -13,23 +13,33 @@ import akka.actor.{ActorRef, Terminated, Actor, Props}
  */
 
 class SplitCollection(name: String,
-                 transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[String] = List(),
-                 leaveListeners: Seq[String] = List(),
-                 enterOperations: Seq[OperationDescriptor] = Nil,
-                 leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends AbstractState(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
+                      transition: TransitionDescriptor,
+                      collectionExpression: String,
+                      listeners: Seq[String] = List(),
+                      enterOperations: Seq[OperationDescriptor] = Nil,
+                      leaveOperations: Seq[OperationDescriptor] = Nil)
+  extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
-  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {}
+  def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
+    val ect = EvalCode.with1Arg[ProcessContext, AnyRef]("pc", collectionExpression)
+    val v= ect.newInstance
+    val coll = v(pc)
+    assert(coll.isInstanceOf[Seq], "Result of expression '" + collectionExpression + "' should be a Seq")
+    val seq = coll.asInstanceOf[Seq[Object]]
+    seq.foreach[Unit](o => createToken(o, pc))
+  }
+
+  private def createToken(o:Object, pc:ProcessContext) = {
+    LOG.info("Creating token for " + o)
+  }
 }
 
 object SplitCollection {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: Seq[String],
-            leavePublisher: Seq[String],
-            enterOperations: Seq[OperationDescriptor],
-            leaveOperations: Seq[OperationDescriptor]): Props = {
-    Props(classOf[State], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = List(),
+            leaveOperations: Seq[OperationDescriptor] = List()): Props = {
+    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
   }
 }

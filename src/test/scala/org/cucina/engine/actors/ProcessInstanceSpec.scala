@@ -73,39 +73,5 @@ with BeforeAndAfterAll {
   }
 }
 
-class LocalState(name: String, transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[String],
-                 leaveListeners: Seq[String],
-                 enterOperations: Seq[OperationDescriptor],
-                 leaveOperations: Seq[OperationDescriptor])
-  extends State(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
-  override def receive: Receive = {
-    case EnterState(_, pc) => {
-      pc.parameters += ("visited" -> "yes")
-      println("pc.parameters:" + pc.parameters)
-      sender ! new ExecuteComplete(pc)
-    }
 
-    case a@_ => {
-      println("Event:" + a)
-    }
-  }
-}
-
-class MockStackActor(name:String) extends StackElementActor {
-  def execute(processContext: ProcessContext): StackElementExecuteResult = {
-    println("Execute this:" + processContext)
-    return StackElementExecuteResult(true, processContext)
-  }
-}
-
-class MockStackDescritptor(val name: String) extends ProcessElementDescriptor {
-  val className: Option[String] = Some(classOf[MockStackActor].getName)
-}
-
-class MockTransitionActor(name: String, output: String, ops: Seq[OperationDescriptor], cx: Seq[CheckDescriptor]) extends Actor {
-  def receive = {
-    case e@_ => println("mocktr:" + e)
-  }
-}
 

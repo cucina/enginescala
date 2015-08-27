@@ -28,7 +28,7 @@ with MockitoSugar {
   "received StackRequest" should {
     "fail for empty " in {
       val actorRef = system.actorOf(Decision.props("dec", List(),
-        List(), List(), List(), List()))
+        List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
@@ -37,7 +37,7 @@ with MockitoSugar {
     }
     "success for first " in {
       val actorRef = system.actorOf(Decision.props("dec", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
-        List(), List(), List(), List()))
+        List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
@@ -46,7 +46,7 @@ with MockitoSugar {
     }
     "fail for first " in {
       val actorRef = system.actorOf(Decision.props("dec", TransitionDescriptor("str", "/user/state", className = Some(classOf[FailingTrans].getName)) :: Nil,
-        List(), List(), List(), List()))
+        List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
@@ -57,7 +57,7 @@ with MockitoSugar {
       val actorRef = system.actorOf(Decision.props("dec",
         TransitionDescriptor("ftr", "/user/state", className = Some(classOf[FailingTrans].getName))
           :: TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
-        List(), List(), List(), List()))
+        List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {

@@ -17,12 +17,11 @@ case class EnterState(transitionName: String, processContext: ProcessContext)
 case class LeaveState(transitionName: String, processContext: ProcessContext)
 
 class State(name: String,
-                 transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[String] = List(),
-                 leaveListeners: Seq[String] = List(),
-                 enterOperations: Seq[OperationDescriptor] = Nil,
-                 leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends AbstractState(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
+            transitions: Seq[TransitionDescriptor],
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = Nil,
+            leaveOperations: Seq[OperationDescriptor] = Nil)
+  extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   override def receiveLocal = {
@@ -55,7 +54,7 @@ class State(name: String,
     case e@_ => LOG.warn("Unhandled " + e)
   }
 
-  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {
+  def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     var lpc = pc
     lpc.token.stateId = name
     LOG.info("Calling " + enterStack.head + " with " + lpc)
@@ -69,10 +68,9 @@ class State(name: String,
 
 object State {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: Seq[String],
-            leavePublisher: Seq[String],
-            enterOperations: Seq[OperationDescriptor],
-            leaveOperations: Seq[OperationDescriptor]): Props = {
-    Props(classOf[State], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = List(),
+            leaveOperations: Seq[OperationDescriptor] = List()): Props = {
+    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
   }
 }

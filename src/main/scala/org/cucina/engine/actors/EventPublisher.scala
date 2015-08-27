@@ -30,11 +30,9 @@ class EventPublisher(val listeners: Seq[String], buildEvent: ProcessContext => P
 }
 
 object EnterPublisher {
-  val buildEvent = (pc:ProcessContext) => new EnterEvent(pc)
-  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, buildEvent)
+  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, (pc:ProcessContext) => new EnterEvent(pc))
 }
 
 object LeavePublisher {
-  val buildEvent = (pc:ProcessContext) => new LeaveEvent(pc)
-  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, buildEvent)
+  def props(listeners: Seq[String]): Props = Props(classOf[EventPublisher], listeners, (pc:ProcessContext) => new LeaveEvent(pc))
 }

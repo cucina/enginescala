@@ -13,12 +13,11 @@ import akka.actor.{ActorRef, Terminated, Actor, Props}
  */
 
 class Split(name: String,
-                 transitions: Seq[TransitionDescriptor],
-                 enterListeners: Seq[String] = List(),
-                 leaveListeners: Seq[String] = List(),
-                 enterOperations: Seq[OperationDescriptor] = Nil,
-                 leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends AbstractState(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
+            transitions: Seq[TransitionDescriptor],
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = Nil,
+            leaveOperations: Seq[OperationDescriptor] = Nil)
+  extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {}
@@ -26,10 +25,9 @@ class Split(name: String,
 
 object Split {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: Seq[String],
-            leavePublisher: Seq[String],
-            enterOperations: Seq[OperationDescriptor],
-            leaveOperations: Seq[OperationDescriptor]): Props = {
-    Props(classOf[State], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = List(),
+            leaveOperations: Seq[OperationDescriptor] = List()): Props = {
+    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
   }
 }

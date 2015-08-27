@@ -58,15 +58,57 @@ case class TransitionDescriptor(name: String, output: String,
 
 case class StateDescriptor(name: String,
                            transitions: Seq[TransitionDescriptor],
-                           enterListeners: Option[Seq[String]] = Some(List()),
-                           leaveListeners: Option[Seq[String]] = Some(List()),
+                           listeners: Option[Seq[String]] = Some(List()),
                            enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
   extends ProcessElementDescriptor {
   override def props: Props = Props(Class.forName(className.getOrElse(classOf[State].getName)), name, transitions,
-    enterListeners.get, leaveListeners.get,
-    enterOperations.get, leaveOperations.get)
+    listeners.get, enterOperations.get, leaveOperations.get)
+}
+
+case class DecisionDescriptor(name: String,
+                              transitions: Seq[TransitionDescriptor],
+                              listeners: Option[Seq[String]] = Some(List()),
+                              enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                              leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                              className: Option[String] = None)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Decision].getName)), name, transitions,
+    listeners.get, enterOperations.get, leaveOperations.get)
+}
+
+case class JoinDescriptor(name: String,
+                          transitions: Seq[TransitionDescriptor],
+                          listeners: Option[Seq[String]] = Some(List()),
+                          enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                          leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                          className: Option[String] = None)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Join].getName)), name, transitions,
+    listeners.get, enterOperations.get, leaveOperations.get)
+}
+
+case class SplitDescriptor(name: String,
+                           transitions: Seq[TransitionDescriptor],
+                           listeners: Option[Seq[String]] = Some(List()),
+                           enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                           leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                           className: Option[String] = None)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Split].getName)), name, transitions,
+    listeners.get, enterOperations.get, leaveOperations.get)
+}
+
+case class SplitCollectionDescriptor(name: String,
+                                     transitions: Seq[TransitionDescriptor],
+                                     listeners: Option[Seq[String]] = Some(List()),
+                                     enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                                     leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
+                                     className: Option[String] = None)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[SplitCollection].getName)), name, transitions,
+    listeners.get, enterOperations.get, leaveOperations.get)
 }
 
 case class EnterPublisherDescriptor(listeners: Seq[String],

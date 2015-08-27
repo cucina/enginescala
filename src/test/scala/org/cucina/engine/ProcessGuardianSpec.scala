@@ -23,7 +23,7 @@ with BeforeAndAfter
 with MockitoSugar {
   val tr1 = new TransitionDescriptor("tr1", "end")
   val definition = new ProcessDefinition(List(new StateDescriptor("start", List(tr1)), new StateDescriptor("end", List())), "start", "fake", "fake")
-  val str = """{"states":[{"name":"start","enterOperations":[],"transitions":[{"name":"tr1","checks":[],"className":"org.cucina.engine.actors.TransitionActor","leaveOperations":[],"output":"end"}],"className":"org.cucina.engine.actors.StateActor","leaveOperations":[]},{"name":"end","enterOperations":[],"transitions":[],"className":"org.cucina.engine.actors.StateActor","leaveOperations":[]}],"startState":"start","description":"fake","id":"fake"}"""
+  val str = """{"states":[{"name":"start","transitions":[{"name":"tr1","checks":[],"className":"org.cucina.engine.actors.TransitionActor","leaveOperations":[],"output":"end"}]},{"name":"end","transitions":[]}],"startState":"start","description":"fake","id":"fake"}"""
   val me = self
 
   override def afterAll() = {
@@ -178,6 +178,3 @@ with MockitoSugar {
   }
 }
 
-class BlankActor extends Actor {
-  def receive = Actor.ignoringBehavior
-}

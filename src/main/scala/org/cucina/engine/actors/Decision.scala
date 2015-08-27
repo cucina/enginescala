@@ -21,11 +21,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class Decision(name: String,
                transitions: Seq[TransitionDescriptor],
-               enterListeners: Seq[String] = List(),
-               leaveListeners: Seq[String] = List(),
+               listeners: Seq[String] = List(),
                enterOperations: Seq[OperationDescriptor] = Nil,
                leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends AbstractState(name, transitions, enterListeners, leaveListeners, enterOperations, leaveOperations) {
+  extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
@@ -36,13 +35,11 @@ class Decision(name: String,
         LOG.warn("Failed to find a single transition in '" + name + "' for " + pc)
         sender ! ExecuteFailed(pc.client, "Failed to find a single transition in '" + name + "'")
     }
-
   }
 
   private def isPassable(tr: ActorRef, pc: ProcessContext): Boolean = {
     import scala.concurrent.duration.DurationInt
-
-    implicit val timeout = Timeout(5 seconds)
+    implicit val timeout = Timeout(5 seconds) // configure it?
     val testResult: Future[ExecuteResult] = ask(tr, DryCheck(pc)).mapTo[ExecuteResult]
     Await.result(testResult, timeout.duration) match {
       case t: ExecuteComplete => true
@@ -51,13 +48,14 @@ class Decision(name: String,
   }
 }
 
+// TODO stateful shortlived actor finding passable transition and sending it back to Decision
+
 
 object Decision {
   def props(name: String, transitions: Seq[TransitionDescriptor],
-            enterPublisher: Seq[String],
-            leavePublisher: Seq[String],
-            enterOperations: Seq[OperationDescriptor],
-            leaveOperations: Seq[OperationDescriptor]): Props = {
-    Props(classOf[Decision], name, transitions, enterPublisher, leavePublisher, enterOperations, leaveOperations)
+            listeners: Seq[String] = List(),
+            enterOperations: Seq[OperationDescriptor] = List(),
+            leaveOperations: Seq[OperationDescriptor] = List()): Props = {
+    Props(classOf[Decision], name, transitions, listeners, enterOperations, leaveOperations)
   }
 }

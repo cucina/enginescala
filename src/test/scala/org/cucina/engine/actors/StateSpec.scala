@@ -26,15 +26,13 @@ with MockitoSugar {
   }
 
   val enterOperations: Seq[OperationDescriptor] = List(new Op1Desc)
-  val leaveOperations: Seq[OperationDescriptor] = List()
   val transitions: Seq[TransitionDescriptor] = List()
 
   "StateActor" when {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(State.props("state", transitions,
-            List(), List(), enterOperations, leaveOperations))
+          val actorRef = system.actorOf(State.props("state", transitions, null, enterOperations, null))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>
@@ -48,13 +46,3 @@ with MockitoSugar {
   }
 }
 
-class Op1 extends StackElementActor {
-  def execute(pc: ProcessContext): StackElementExecuteResult = {
-    pc.parameters += ("Op1" -> "called")
-    new StackElementExecuteResult(true, processContext = pc)
-  }
-}
-
-class Op1Desc extends OperationDescriptor("op1", className = Some(classOf[Op1].getName)) {
-  override def props: Props = Props[Op1]
-}

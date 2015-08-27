@@ -11,8 +11,7 @@ import org.slf4j.LoggerFactory
  */
 abstract class AbstractState(name: String,
                              transitions: Seq[TransitionDescriptor],
-                             enterListeners: Seq[String] = List(),
-                             leaveListeners: Seq[String] = List(),
+                             listeners: Seq[String] = List(),
                              enterOperations: Seq[OperationDescriptor] = Nil,
                              leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorFinder {
@@ -27,8 +26,8 @@ abstract class AbstractState(name: String,
     // TODO preserve order
     transitions.map(tr => tr.name -> createActor(tr)).toMap
   }
-  lazy val enterPubActor: ActorRef = createActor(new EnterPublisherDescriptor(enterListeners))
-  lazy val leavePubActor: ActorRef = createActor(new LeavePublisherDescriptor(leaveListeners))
+  lazy val enterPubActor: ActorRef = createActor(new EnterPublisherDescriptor(listeners))
+  lazy val leavePubActor: ActorRef = createActor(new LeavePublisherDescriptor(listeners))
   lazy val enterStack: Seq[ActorRef] = enterOpActors :+ enterPubActor
   lazy val leaveStack: Seq[ActorRef] = leaveOpActors :+ leavePubActor
 
