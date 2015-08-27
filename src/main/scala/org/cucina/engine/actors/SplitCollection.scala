@@ -22,12 +22,19 @@ class SplitCollection(name: String,
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
-    val ect = EvalCode.with1Arg[ProcessContext, AnyRef]("pc", collectionExpression)
-    val v= ect.newInstance
-    val coll = v(pc)
-    assert(coll.isInstanceOf[Seq], "Result of expression '" + collectionExpression + "' should be a Seq")
-    val seq = coll.asInstanceOf[Seq[Object]]
-    seq.foreach[Unit](o => createToken(o, pc))
+    try {
+      println("Eval expr=" + collectionExpression)
+      val ect = EvalCode.with1Arg[ProcessContext, AnyRef]("pc", collectionExpression)
+      println("Eval expr=" + ect)
+      val v = ect.newInstance
+      val coll = v(pc)
+      println("coll=" + coll)
+      assert(coll.isInstanceOf[Seq[Object]], "Result of expression '" + collectionExpression + "' should be a Seq")
+      val seq = coll.asInstanceOf[Seq[Object]]
+      seq.foreach[Unit](o => createToken(o, pc))
+    } catch {
+      case e => LOG.error("Oops", e)
+    }
   }
 
   private def createToken(o:Object, pc:ProcessContext) = {
@@ -36,10 +43,11 @@ class SplitCollection(name: String,
 }
 
 object SplitCollection {
-  def props(name: String, transitions: Seq[TransitionDescriptor],
+  def props(name: String, transition: TransitionDescriptor,
+           collectionExpression:String,
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
+    Props(classOf[SplitCollection], name, transition, collectionExpression, listeners, enterOperations, leaveOperations)
   }
 }
