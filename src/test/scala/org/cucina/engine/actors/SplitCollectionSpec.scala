@@ -3,7 +3,7 @@ package org.cucina.engine.actors
 import akka.actor.{Props, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
-import org.cucina.engine.ProcessContext
+import org.cucina.engine.{ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition.{TransitionDescriptor, ProcessDefinition, Token}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
@@ -37,18 +37,21 @@ with MockitoSugar {
   val actorRef = Await.result(ro, resolveTimeout.duration)
   println("Located actor:" + actorRef)
 
+//  val statement = "pc.token.domainObject.asInstanceOf[" + classOf[SimpleColl].getName + "].coll"
+  val statement = "token().domainObject().coll()"
 
   "received StackRequest" should {
     "execute for simple " in {
       val actorRef = system.actorOf(SplitCollection.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
-        "pc.token.domainObject.asInstanceOf[" + classOf[SimpleColl].getName + "].coll",
-        List(), List(), List()))
+        statement, List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token(SimpleColl("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 
       actorRef ! new StackRequest(processContext, List())
-      expectMsgPF(500 millis) {
-        case msg => println("msg " + msg)
+      expectMsgPF(2 seconds) {
+        case ExecuteComplete(pc) =>
+          println("pc " + pc)
+          println(pc.token.children)
       }
     }
   }

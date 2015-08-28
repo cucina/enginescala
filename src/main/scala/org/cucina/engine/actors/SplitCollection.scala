@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import com.googlecode.scalascriptengine.EvalCode
+import ognl.Ognl
 
 import org.cucina.engine.{ExecuteComplete, ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition._
@@ -20,15 +20,14 @@ class SplitCollection(name: String,
                       leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
+  LOG.info("Eval expr=" + collectionExpression)
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     try {
-      println("Eval expr=" + collectionExpression)
-      val ect = EvalCode.with1Arg[ProcessContext, AnyRef]("pc", collectionExpression)
-      val v = ect.newInstance
-      val coll = v(pc)
+      val coll = Ognl.getValue(collectionExpression, pc)
+
       assert(coll.isInstanceOf[Seq[Object]], "Result of expression '" + collectionExpression + "' should be a Seq but is " + coll)
-      val launcher = context.actorOf(Props[SplitLaunch])
+      val launcher = context.actorOf(Props(classOf[SplitLaunch], sender))
       launcher forward CollectionLaunch(coll.asInstanceOf[Seq[Object]], pc, findTransition(transition.name))
     } catch {
       case e:Throwable => LOG.error("Oops", e)
@@ -48,7 +47,7 @@ object SplitCollection {
 
 case class CollectionLaunch(collection: Seq[Object], processContext: ProcessContext, transition: ActorRef)
 
-class SplitLaunch extends Actor {
+class SplitLaunch(mySender:ActorRef, pc:ProcessContext) extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
   private var launched: Int = 0
   private var parentPc: ProcessContext = _
@@ -62,13 +61,14 @@ class SplitLaunch extends Actor {
       LOG.info("Received " + ec)
       launched -= 1
       if (launched == 0) {
-        sender ! ExecuteComplete(parentPc)
+        println("Last complete, notifying sender " + sender)
+        mySender ! ExecuteComplete(parentPc)
         self ! PoisonPill
       }
 
     case ef@ExecuteFailed(c, f) =>
       LOG.info("Received " + ef)
-      sender ! ExecuteFailed(c, f)
+      mySender ! ExecuteFailed(c, f)
       self ! PoisonPill
   }
 

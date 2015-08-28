@@ -51,11 +51,11 @@ class SucceedingTrans(name: String, output: String,
   extends Transition(name, output){
   override def receive = {
     case StackRequest(pc, callerstack) =>
-      println("Real request")
-      sender ! ExecuteComplete(pc)
+      println("Real request " + pc + " sender " + sender)
+      sender forward ExecuteComplete(pc)
     case DryCheck(pc) =>
       println("DryCheck " + pc)
-      sender ! ExecuteComplete(pc)
+      sender forward ExecuteComplete(pc)
   }
 }
 
