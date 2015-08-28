@@ -27,8 +27,8 @@ class SplitCollection(name: String,
       val coll = Ognl.getValue(collectionExpression, pc)
 
       assert(coll.isInstanceOf[Seq[Object]], "Result of expression '" + collectionExpression + "' should be a Seq but is " + coll)
-      val launcher = context.actorOf(Props(classOf[SplitLaunch], sender))
-      launcher forward CollectionLaunch(coll.asInstanceOf[Seq[Object]], pc, findTransition(transition.name))
+      val launcher = context.actorOf(Props(classOf[SplitLaunch], sender, pc))
+      launcher forward CollectionLaunch(coll.asInstanceOf[Seq[Object]], findTransition(transition.name))
     } catch {
       case e:Throwable => LOG.error("Oops", e)
     }
@@ -45,38 +45,37 @@ object SplitCollection {
   }
 }
 
-case class CollectionLaunch(collection: Seq[Object], processContext: ProcessContext, transition: ActorRef)
+case class CollectionLaunch(collection: Seq[Object], transition: ActorRef)
 
-class SplitLaunch(mySender:ActorRef, pc:ProcessContext) extends Actor {
+class SplitLaunch(mySender:ActorRef, parentPc:ProcessContext) extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
   private var launched: Int = 0
-  private var parentPc: ProcessContext = _
 
   def receive = {
-    case CollectionLaunch(coll, pc, tr) =>
-      parentPc = pc
-      coll.foreach[Unit](o => createToken(o, pc, tr))
+    case CollectionLaunch(coll, tr) =>
+      coll.foreach[Unit](o => createToken(o, tr))
       LOG.info("Launched=" + launched)
     case ec@ExecuteComplete(pc) =>
       LOG.info("Received " + ec)
       launched -= 1
       if (launched == 0) {
-        println("Last complete, notifying sender " + sender)
+        LOG.info("Last complete, notifying sender " + sender)
         mySender ! ExecuteComplete(parentPc)
         self ! PoisonPill
       }
 
     case ef@ExecuteFailed(c, f) =>
       LOG.info("Received " + ef)
+      parentPc.token.children.empty
       mySender ! ExecuteFailed(c, f)
       self ! PoisonPill
   }
 
-  private def createToken(o: Object, pc: ProcessContext, tr: ActorRef) = {
+  private def createToken(o: Object, tr: ActorRef) = {
     LOG.info("Creating token for " + o)
-    val t = Token(o, pc.token.processDefinition)
-    pc.token.children + t
-    val processContext = ProcessContext(t, pc.parameters, pc.client)
+    val t = Token(o, parentPc.token.processDefinition)
+    parentPc.token.children += t
+    val processContext = ProcessContext(t, parentPc.parameters, parentPc.client)
     tr ! StackRequest(processContext, List())
     launched += 1
   }
