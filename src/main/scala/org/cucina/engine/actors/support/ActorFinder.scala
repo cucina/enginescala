@@ -35,11 +35,10 @@ trait ActorFinder {
   /// recursive search in this context and in its parent/grandparent
   def findActor(name: String)(implicit context: ActorContext): Option[ActorRef] = {
     // TODO cache actors
-    val searchPaths = name match {
-      case x if x startsWith "/" => List(x)
-      case y => List(y, "../" + y, "../../" + y)
+    name match {
+      case x if x startsWith "/" => search(List(x))(context.system)
+      case y => search(List(y, "../" + y, "../../" + y))
     }
-    search(searchPaths)
   }
 
   def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): Option[ActorRef] = {
@@ -51,7 +50,7 @@ trait ActorFinder {
     }
   }
 
-  private def search(paths: List[String])(implicit context: ActorContext): Option[ActorRef] = {
+  private def search(paths: List[String])(implicit context: ActorRefFactory): Option[ActorRef] = {
     paths match {
       case List() =>
         None
@@ -65,15 +64,16 @@ trait ActorFinder {
 
   private[this] val cache = new mutable.HashMap[String, ActorRef]()
 
-  private def searchPath(path: String)(implicit context: ActorContext): Option[ActorRef] = {
+  private def searchPath(path: String)(implicit context: ActorRefFactory): Option[ActorRef] = {
     cache.get(path) match {
       case s@Some(_) => s
       case None =>
-        LOG.info("Path:" + path + " for " + context.self)
+        LOG.info("Path:" + path)
         try {
           // TODO parameter for timeout?
           implicit val resolveTimeout = Timeout(500 millis)
           val ac = context.actorSelection(path)
+
           val ro = ac.resolveOne()
           val actorRef = Await.result(ro, resolveTimeout.duration)
           LOG.info("Located actor:" + actorRef)

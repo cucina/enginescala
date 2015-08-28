@@ -17,7 +17,7 @@ class Transition(name: String, output: String,
   extends Actor
   with ActorFinder {
   private val LOG = LoggerFactory.getLogger(getClass)
-  lazy val outputState: ActorRef = {
+  val outputState: ActorRef = {
     findActor(output) match {
       case None =>
         throw new IllegalArgumentException("Failed to find output state '" + output + "'")
@@ -33,16 +33,20 @@ class Transition(name: String, output: String,
 
   val staticstack: Seq[ActorRef] = checkActors ++ leaveOpActors
 
-  override def preStart() = {
+  override def preStart = {
     try {
       // reason for this call is to have a quickfail
       LOG.info("Located output state:" + outputState)
     } catch {
       case e: IllegalArgumentException => {
-        LOG.error("Failed to find output state @ " + "../../" + output)
+        LOG.error("Failed to find output state @ " + output)
         self ! PoisonPill
       }
     }
+  }
+
+  override def postStop = {
+    LOG.info("Been killed " + self)
   }
 
   // this actor should be terminal in a stack therefore it should set a new stack

@@ -22,7 +22,7 @@ abstract class AbstractState(name: String,
   lazy val leaveOpActors: Seq[ActorRef] = {
     leaveOperations.map(op => createActor(op))
   }
-  lazy val transActors: Map[String, ActorRef] = {
+  val transActors: Map[String, ActorRef] = {
     // TODO preserve order
     transitions.map(tr => tr.name -> createActor(tr)).toMap
   }
@@ -53,4 +53,12 @@ abstract class AbstractState(name: String,
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef])
 
+  def findTransition(name: String): ActorRef = {
+    transActors.get(name) match {
+      case Some(t) => t
+      case None =>
+        LOG.warn("Failed to find transition '" + name + "'")
+        throw new IllegalArgumentException("Failed to find transition '" + name + "'")
+    }
+  }
 }

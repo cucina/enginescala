@@ -32,7 +32,7 @@ with MockitoSugar {
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
-        case msg => println("msg " + msg)
+        case msg => println("DecisionSpec fe msg " + msg)
       }
     }
     "success for first " in {
@@ -41,7 +41,7 @@ with MockitoSugar {
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
-        case msg:ExecuteComplete => println("msg " + msg)
+        case msg:ExecuteComplete => println("DecisionSpec sf msg " + msg)
       }
     }
     "fail for first " in {
@@ -50,7 +50,7 @@ with MockitoSugar {
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
-        case msg:ExecuteFailed => println("msg " + msg)
+        case msg:ExecuteFailed => println("DecisionSpec ff msg " + msg)
       }
     }
     "success for second " in {
@@ -61,7 +61,7 @@ with MockitoSugar {
       val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]), new mutable.HashMap[String, Object](), testActor)
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
-        case msg:ExecuteComplete => println("msg " + msg)
+        case msg:ExecuteComplete => println("DecisionSpec ss msg " + msg)
       }
     }
   }
