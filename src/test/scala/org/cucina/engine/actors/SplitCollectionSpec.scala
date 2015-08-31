@@ -39,9 +39,10 @@ with MockitoSugar {
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(1 second) {
         case ExecuteComplete(pc) =>
-          println("pc " + pc)
           assert(pc.token.hasChildren)
           assert(pc.token.children.size == 3)
+          val ch = pc.token.children.head
+          assert(ch.parent.get == pc.token)
       }
     }
     "fail for simple " in {

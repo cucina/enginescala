@@ -75,9 +75,9 @@ class SplitLaunch(mySender:ActorRef, parentPc:ProcessContext) extends Actor {
     LOG.info("Creating token for " + o)
     val t = Token(o, parentPc.token.processDefinition)
     parentPc.token.children += t
+    t.parent = Some(parentPc.token)
     val processContext = ProcessContext(t, parentPc.parameters, parentPc.client)
     tr ! StackRequest(processContext, List())
     launched += 1
   }
-
 }
