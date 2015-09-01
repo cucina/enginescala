@@ -1,8 +1,9 @@
-package org.cucina.engine
+package org.cucina.engine.integration
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.definition.{DefinitionProtocol, TransitionDescriptor, StateDescriptor, ProcessDefinition}
+import org.cucina.engine._
+import org.cucina.engine.definition.{DefinitionProtocol, ProcessDefinition, StateDescriptor, TransitionDescriptor}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 
@@ -27,8 +28,8 @@ with MockitoSugar {
   val domainObject = new Object
 
   "ProcessGuardian" when {
-    import spray.json._
     import DefinitionProtocol._
+    import spray.json._
     val simpleDef = ProcessDefinition(simpleStates, "start", "desc", "simple")
 
     val json = simpleDef.toJson

@@ -61,4 +61,8 @@ abstract class AbstractState(name: String,
         throw new IllegalArgumentException("Failed to find transition '" + name + "'")
     }
   }
+
+  protected def canLeave(pc: ProcessContext): Boolean = {
+    pc.token.stateId == name  && !pc.token.hasChildren
+  }
 }

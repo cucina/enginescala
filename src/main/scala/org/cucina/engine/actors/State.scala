@@ -60,10 +60,6 @@ class State(name: String,
     LOG.info("Calling " + enterStack.head + " with " + lpc)
     enterStack.head forward new StackRequest(lpc, enterStack.tail)
   }
-
-  private def canLeave(pc: ProcessContext): Boolean = {
-    pc.token.stateId == name
-  }
 }
 
 object State {

@@ -1,8 +1,9 @@
-package org.cucina.engine
+package org.cucina.engine.integration
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
-import org.cucina.engine.actors.{ScriptExecuteActor, PresetBooleanReturnActor}
+import org.cucina.engine._
+import org.cucina.engine.actors.PresetBooleanReturnActor
 import org.cucina.engine.definition._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}

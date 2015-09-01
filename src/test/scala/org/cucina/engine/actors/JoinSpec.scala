@@ -27,11 +27,11 @@ with MockitoSugar {
   println(system.actorOf(Props[OutState], "state"))
 
   "received StackRequest" should {
-    "success for single " in {
+    "succeeded for single " in {
       val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
          List(), List(), List()))
-      val parent = new Token(ObjectWithSimpleCollection("a" :: Nil), mock[ProcessDefinition])
-      val cha = new Token("a", mock[ProcessDefinition])
+      val parent = new Token(ObjectWithSimpleCollection("AA" :: Nil), mock[ProcessDefinition])
+      val cha = new Token("AA", mock[ProcessDefinition])
       parent.children += cha
       cha.parent = Some(parent)
       val processContext: ProcessContext = new ProcessContext(cha, new mutable.HashMap[String, Object](), testActor)
@@ -42,15 +42,15 @@ with MockitoSugar {
           assert(!pc.token.hasChildren)
       }
     }
-    "success for double " in {
+    "succeeded for double " in {
       val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
         List(), List(), List()))
-      val parent = new Token(ObjectWithSimpleCollection("a" :: "b" :: Nil), mock[ProcessDefinition])
-      val chA = new Token("a", mock[ProcessDefinition])
+      val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
+      val chA = new Token("A", mock[ProcessDefinition])
       parent.children += chA
       chA.parent = Some(parent)
       val pcA: ProcessContext = new ProcessContext(chA, new mutable.HashMap[String, Object](), testActor)
-      val chB = new Token("b", mock[ProcessDefinition])
+      val chB = new Token("B", mock[ProcessDefinition])
       parent.children += chB
       chB.parent = Some(parent)
       val pcB: ProcessContext = new ProcessContext(chB, new mutable.HashMap[String, Object](), testActor)
@@ -65,7 +65,7 @@ with MockitoSugar {
     "fail for parentless " in {
       val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
         List(), List(), List()))
-      val processContext: ProcessContext = new ProcessContext(new Token("a" , mock[ProcessDefinition]),
+      val processContext: ProcessContext = new ProcessContext(new Token("C" , mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 
       actorRef ! new StackRequest(processContext, List())
