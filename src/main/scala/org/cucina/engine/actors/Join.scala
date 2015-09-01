@@ -4,12 +4,23 @@ import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition._
 import org.slf4j.LoggerFactory
 
-import akka.actor.{ActorRef, Actor, Props}
+import akka.actor.{PoisonPill, ActorRef, Actor, Props}
 
 /**
+ * This process element joins previously created flows back into a single stream.
+ * Note that discards subflows upon successful entry, so if it desirable to save some states, for example dealing
+ * with subflows upon members of a collection, an operation should be provided in the enter operation stack.
+ *
+ * Once all subflows have joined, the only transition will be taken for the parent object.
+ *
+ * @param name
+ * @param transition
+ * @param listeners
+ * @param enterOperations
+ * @param leaveOperations
+ *
  * @author levinev
  */
-
 class Join(name: String,
            transition: TransitionDescriptor,
            listeners: Seq[String] = List(),
@@ -19,13 +30,18 @@ class Join(name: String,
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
+    if (stack.nonEmpty) {
+      LOG.warn("Join '" + name + "' should be a terminal actor in the stack, but the stack was " + stack)
+      sender ! ExecuteFailed(pc.client, "Join '" + name + "' should be a terminal actor in the stack")
+    }
     pc.token.parent match {
       case Some(parent) =>
-        val joiner = context.actorOf(Props(classOf[Joiner], transition, listeners, leaveOperations))
-      // execute enter ops appending a temp actor to handle next step below
-      // kill this token
-      // if it is the last one, execute leave ops on parent
-      // take the only transition
+        val leaves = leaveStack :+ findTransition(transition.name)
+        val joiner = context.actorOf(Props(classOf[Joiner], leaves))
+        // execute enter ops appending a temp actor to handle next step below
+        val mestack: Seq[ActorRef] = enterStack :+ joiner
+        LOG.info("Stack=" + mestack)
+        mestack.head forward new StackRequest(pc, mestack.tail)
       case None =>
         LOG.warn("Attempted to execute join with a parentless context")
         sender ! ExecuteFailed(pc.client, "Attempted to execute join with a parentless context")
@@ -34,29 +50,38 @@ class Join(name: String,
 }
 
 object Join {
-  def props(name: String, transitions: Seq[TransitionDescriptor],
+  def props(name: String, transition: TransitionDescriptor,
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
+    Props(classOf[Join], name, transition, listeners, enterOperations, leaveOperations)
   }
 }
 
-class Joiner(transition: Transition,
-             listeners: Seq[String] = List(),
-             leaveOperations: Seq[OperationDescriptor] = Nil) extends Actor {
+/**
+ * A quickie actor to handle end of stack execution
+ *
+ * @param leaveStack
+ */
+class Joiner(leaveStack: Seq[ActorRef] = Nil) extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
 
   def receive = {
     case StackRequest(pc, callerstack) =>
       pc.token.parent match {
         case Some(parent) =>
-        // kill this token
-        // if it is the last one, execute leave ops on parent
-        // take the only transition
+          assert(parent.hasChildren, "Cannot process this as parent does not have children")
+          // kill this token
+          parent.children.remove(pc.token)
+          // if it is the last one, execute leave ops on parent
+          if (parent.children.isEmpty) {
+            // take the only transition
+            leaveStack.head forward new StackRequest(pc, leaveStack.tail)
+          }
         case None =>
           LOG.warn("Attempted to execute join with a parentless context")
           sender ! ExecuteFailed(pc.client, "Attempted to execute join with a parentless context")
       }
+      self ! PoisonPill
   }
 }

@@ -33,7 +33,7 @@ with MockitoSugar {
     "success for simple " in {
       val actorRef = system.actorOf(SplitCollection.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
         statement, List(), List(), List()))
-      val processContext: ProcessContext = new ProcessContext(new Token(SimpleColl("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
+      val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 
       actorRef ! new StackRequest(processContext, List())
@@ -48,7 +48,7 @@ with MockitoSugar {
     "fail for simple " in {
       val actorRef = system.actorOf(SplitCollection.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[FailingTrans].getName)),
         statement, List(), List(), List()))
-      val processContext: ProcessContext = new ProcessContext(new Token(SimpleColl("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
+      val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 
       actorRef ! new StackRequest(processContext, List())
@@ -60,5 +60,3 @@ with MockitoSugar {
     }
   }
 }
-
-case class SimpleColl(coll: Seq[String])

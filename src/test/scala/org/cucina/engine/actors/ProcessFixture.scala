@@ -112,3 +112,5 @@ class Op1 extends StackElementActor {
 class Op1Desc extends OperationDescriptor("op1", className = Some(classOf[Op1].getName)) {
   override def props: Props = Props[Op1]
 }
+
+case class ObjectWithSimpleCollection(coll: Seq[String])

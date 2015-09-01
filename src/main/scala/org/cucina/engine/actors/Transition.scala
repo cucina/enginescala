@@ -54,7 +54,10 @@ class Transition(name: String, output: String,
   def receive = {
     case StackRequest(pc, callerstack) =>
       LOG.info("StackRequest")
-      if (!callerstack.isEmpty) sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
+      if (callerstack.nonEmpty) {
+        LOG.warn("Transition '" + name + "' should be a terminal actor in the stack, but the stack was " + callerstack)
+        sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
+      }
       else {
         // build stack and execute it
         val stack: Seq[ActorRef] = staticstack :+ outputState
