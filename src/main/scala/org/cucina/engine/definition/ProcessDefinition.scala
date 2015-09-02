@@ -29,23 +29,6 @@ trait ProcessElementDescriptor {
     val sb = new StringBuilder()
     sb.append("className='").append(className).append("' name='").append(name).append("'").toString()
   }
-
-  def getStackElementClass(classN: String): Class[_] = {
-    val clazz = Class.forName(classN)
-    if (!classOf[StackElementActor].isAssignableFrom(clazz)) throw new IllegalArgumentException("className (" + classN
-      + ") provided should be of a class extending StackElementActor")
-    clazz
-  }
-}
-
-case class OperationDescriptor(name: String, className: Option[String] = None, parameter: String = null)
-  extends ProcessElementDescriptor {
-  override def props: Props = Props(getStackElementClass(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
-}
-
-case class CheckDescriptor(name: String, className: Option[String] = None, parameter: String = null)
-  extends ProcessElementDescriptor {
-  override def props: Props = Props(getStackElementClass(className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
 }
 
 case class TransitionDescriptor(name: String, output: String,
@@ -61,12 +44,20 @@ case class StateDescriptor(name: String,
                            listeners: Option[Seq[String]] = Some(List()),
                            enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
-                           className: Option[String] = None)
+                           className: Option[String] = None,
+                            parameters: Option[Map[String, String]] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[State].getName)), name, transitions,
-    listeners.get, enterOperations.get, leaveOperations.get)
+  override def props: Props = {
+    parameters match {
+      case Some(p) => Props(Class.forName(className.getOrElse(classOf[State].getName)), name, transitions,
+        listeners.get, enterOperations.get, leaveOperations.get, p)
+      case None => Props(Class.forName(className.getOrElse(classOf[State].getName)), name, transitions,
+        listeners.get, enterOperations.get, leaveOperations.get)
+    }
+  }
 }
 
+/*
 case class DecisionDescriptor(name: String,
                               transitions: Seq[TransitionDescriptor],
                               listeners: Option[Seq[String]] = Some(List()),
@@ -79,37 +70,60 @@ case class DecisionDescriptor(name: String,
 }
 
 case class JoinDescriptor(name: String,
-                          transitions: Seq[TransitionDescriptor],
+                          transition: TransitionDescriptor,
                           listeners: Option[Seq[String]] = Some(List()),
                           enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                           leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                           className: Option[String] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Join].getName)), name, transitions,
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Join].getName)), name, transition,
     listeners.get, enterOperations.get, leaveOperations.get)
 }
 
 case class SplitDescriptor(name: String,
-                           transitions: Seq[TransitionDescriptor],
+                           transition: TransitionDescriptor,
                            listeners: Option[Seq[String]] = Some(List()),
                            enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                            className: Option[String] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Split].getName)), name, transitions,
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[Split].getName)), name, transition,
     listeners.get, enterOperations.get, leaveOperations.get)
 }
 
 case class SplitCollectionDescriptor(name: String,
-                                     transitions: Seq[TransitionDescriptor],
+                                     transition: TransitionDescriptor,
                                      listeners: Option[Seq[String]] = Some(List()),
                                      enterOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                                      leaveOperations: Option[Seq[OperationDescriptor]] = Some(List()),
                                      className: Option[String] = None)
   extends ProcessElementDescriptor {
-  override def props: Props = Props(Class.forName(className.getOrElse(classOf[SplitCollection].getName)), name, transitions,
+  override def props: Props = Props(Class.forName(className.getOrElse(classOf[SplitCollection].getName)), name, transition,
     listeners.get, enterOperations.get, leaveOperations.get)
 }
+*/
+
+object StackElementDescriptor {
+  def getStackElementClass(classN: String): Class[_] = {
+    val clazz = Class.forName(classN)
+    if (!classOf[StackElementActor].isAssignableFrom(clazz)) throw new IllegalArgumentException("className (" + classN
+      + ") provided should be of a class extending StackElementActor")
+    clazz
+  }
+}
+
+case class OperationDescriptor(name: String, className: Option[String] = None, parameter: String = null)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(StackElementDescriptor.getStackElementClass(
+    className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
+}
+
+case class CheckDescriptor(name: String, className: Option[String] = None, parameter: String = null)
+  extends ProcessElementDescriptor {
+  override def props: Props = Props(StackElementDescriptor.getStackElementClass(
+    className.getOrElse(classOf[DelegatingStackActor].getName)), parameter)
+}
+
 
 case class EnterPublisherDescriptor(listeners: Seq[String],
                                     val name: String = "enterPublisher",

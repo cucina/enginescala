@@ -1,7 +1,7 @@
 package org.cucina.engine.actors
 
 import org.cucina.engine.{ExecuteFailed, ProcessContext}
-import org.cucina.engine.actors.support.ActorFinder
+import org.cucina.engine.actors.support.{ActorCreator, ActorFinder}
 import org.cucina.engine.definition.{CheckDescriptor, OperationDescriptor}
 import akka.actor._
 import org.slf4j.LoggerFactory
@@ -9,13 +9,14 @@ import org.slf4j.LoggerFactory
 /**
  * @author levinev
  */
-case class DryCheck(pc:ProcessContext)
+case class DryCheck(pc: ProcessContext)
 
 class Transition(name: String, output: String,
-                      leaveOperations: Seq[OperationDescriptor] = List(),
-                      checks: Seq[CheckDescriptor] = List())
+                 leaveOperations: Seq[OperationDescriptor] = List(),
+                 checks: Seq[CheckDescriptor] = List())
   extends Actor
-  with ActorFinder {
+  with ActorFinder
+  with ActorCreator {
   private val LOG = LoggerFactory.getLogger(getClass)
   val outputState: ActorRef = {
     findActor(output) match {

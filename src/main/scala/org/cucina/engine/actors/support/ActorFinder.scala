@@ -4,7 +4,6 @@ import java.util.concurrent.TimeoutException
 
 import akka.actor._
 import akka.util.Timeout
-import org.cucina.engine.definition.ProcessElementDescriptor
 import org.slf4j.LoggerFactory
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -25,28 +24,12 @@ trait ActorFinder {
     }
   }
 
-  def findAndSend(elementDescriptor: ProcessElementDescriptor, event: Any)(implicit context: ActorContext): Unit = {
-    findActor(elementDescriptor) match {
-      case None => LOG.info("Failed to find actor from '" + elementDescriptor + "'")
-      case Some(a) => a ! event
-    }
-  }
-
   /// recursive search in this context and in its parent/grandparent
   def findActor(name: String)(implicit context: ActorContext): Option[ActorRef] = {
     // TODO cache actors
     name match {
       case x if x startsWith "/" => search(List(x))(context.system)
       case y => search(List(y, "../" + y, "../../" + y))
-    }
-  }
-
-  def findActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): Option[ActorRef] = {
-    if (elementDescriptor.name == null) {
-      LOG.warn("Cannot find an actor without a name")
-      None
-    } else {
-      findActor(elementDescriptor.name)
     }
   }
 
@@ -92,15 +75,5 @@ trait ActorFinder {
             None
         }
     }
-  }
-
-  def createActor(elementDescriptor: ProcessElementDescriptor)(implicit context: ActorContext): ActorRef = {
-    val props = elementDescriptor.props
-    LOG.info("Props:" + props)
-    val c = if (elementDescriptor.name == null) context actorOf props else context actorOf(props, elementDescriptor.name)
-    require(c != null, "ActorRef cannot be null")
-    context watch c
-    LOG.info("Created actor:" + c)
-    c
   }
 }

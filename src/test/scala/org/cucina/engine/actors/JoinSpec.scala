@@ -28,7 +28,7 @@ with MockitoSugar {
 
   "received StackRequest" should {
     "succeeded for single " in {
-      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
+      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName))::Nil,
          List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("AA" :: Nil), mock[ProcessDefinition])
       val cha = new Token("AA", mock[ProcessDefinition])
@@ -43,7 +43,7 @@ with MockitoSugar {
       }
     }
     "succeeded for double " in {
-      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
+      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName))::Nil,
         List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
       val chA = new Token("A", mock[ProcessDefinition])
@@ -63,7 +63,7 @@ with MockitoSugar {
       }
     }
     "fail for parentless " in {
-      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
+      val actorRef = system.actorOf(Join.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName))::Nil,
         List(), List(), List()))
       val processContext: ProcessContext = new ProcessContext(new Token("C" , mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)

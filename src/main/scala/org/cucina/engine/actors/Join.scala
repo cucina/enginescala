@@ -29,6 +29,14 @@ class Join(name: String,
   extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
+  def this(name: String,
+           transitions: Seq[TransitionDescriptor],
+           listeners: Seq[String],
+           enterOperations: Seq[OperationDescriptor],
+           leaveOperations: Seq[OperationDescriptor]) = {
+    this(name, transitions.head, listeners, enterOperations, leaveOperations)
+  }
+
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     if (stack.nonEmpty) {
       LOG.warn("Join '" + name + "' should be a terminal actor in the stack, but the stack was " + stack)
@@ -50,11 +58,13 @@ class Join(name: String,
 }
 
 object Join {
-  def props(name: String, transition: TransitionDescriptor,
+  def props(name: String, transitions: Seq[TransitionDescriptor],
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[Join], name, transition, listeners, enterOperations, leaveOperations)
+    require(transitions != null && transitions.nonEmpty, "Transitions is empty")
+    require(transitions.size == 1, "Transitions should have exactly one member")
+    Props(classOf[Join], name, transitions.head, listeners, enterOperations, leaveOperations)
   }
 }
 

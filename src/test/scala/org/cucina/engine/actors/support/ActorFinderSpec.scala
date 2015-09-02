@@ -36,7 +36,7 @@ with ImplicitSender {
         when(context.actorSelection("../../empty")).thenThrow(new ActorNotFound(null))
         val ar = mock[ActorRef]
         when(context.actorOf(anyObject[Props], anyString())).thenReturn(ar)
-        val cre = wrap.findActor(new EmptyDescriptor)
+        val cre = wrap.findActor("empty")
         assert(cre == None)
       }
 
@@ -95,13 +95,6 @@ with ImplicitSender {
       }
     }
   }
-
-  class EmptyDescriptor extends ProcessElementDescriptor {
-    override val className: Option[String] = Some(classOf[EmptyActor].getName)
-    val arguments: Seq[Any] = Array[Any]("ana", 2)
-    override val name: String = "empty"
-  }
-
 }
 
 class SimpleFinder extends Actor with ActorFinder {

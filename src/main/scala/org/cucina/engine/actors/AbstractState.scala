@@ -2,7 +2,7 @@ package org.cucina.engine.actors
 
 import akka.actor.{Terminated, ActorRef, Actor}
 import org.cucina.engine.{ProcessContext, ExecuteFailed}
-import org.cucina.engine.actors.support.ActorFinder
+import org.cucina.engine.actors.support.{ActorCreator, ActorFinder}
 import org.cucina.engine.definition.{LeavePublisherDescriptor, EnterPublisherDescriptor, TransitionDescriptor, OperationDescriptor}
 import org.slf4j.LoggerFactory
 
@@ -14,7 +14,7 @@ abstract class AbstractState(name: String,
                              listeners: Seq[String] = List(),
                              enterOperations: Seq[OperationDescriptor] = Nil,
                              leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends Actor with ActorFinder {
+  extends Actor with ActorCreator {
   private val LOG = LoggerFactory.getLogger(getClass)
   lazy val enterOpActors: Seq[ActorRef] = {
     enterOperations.map(op => createActor(op))

@@ -14,13 +14,22 @@ import akka.actor._
 
 class SplitCollection(name: String,
                       transition: TransitionDescriptor,
-                      collectionExpression: String,
                       listeners: Seq[String] = List(),
                       enterOperations: Seq[OperationDescriptor] = Nil,
-                      leaveOperations: Seq[OperationDescriptor] = Nil)
+                      leaveOperations: Seq[OperationDescriptor] = Nil,
+                      collectionExpression: String)
   extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
   LOG.info("Eval expr=" + collectionExpression)
+
+  def this(name: String,
+           transitions: Seq[TransitionDescriptor],
+           listeners: Seq[String],
+           enterOperations: Seq[OperationDescriptor],
+           leaveOperations: Seq[OperationDescriptor],
+           parameters: Map[String, String]) = {
+    this(name, transitions.head, listeners, enterOperations, leaveOperations, parameters.get("collectionExpression").get)
+  }
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     try {
@@ -30,24 +39,26 @@ class SplitCollection(name: String,
       val launcher = context.actorOf(Props(classOf[SplitLaunch], sender, pc))
       launcher forward CollectionLaunch(coll.asInstanceOf[Seq[Object]], findTransition(transition.name))
     } catch {
-      case e:Throwable => LOG.error("Oops", e)
+      case e: Throwable => LOG.error("Oops", e)
     }
   }
 }
 
 object SplitCollection {
-  def props(name: String, transition: TransitionDescriptor,
+  def props(name: String, transitions: Seq[TransitionDescriptor],
             collectionExpression: String,
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[SplitCollection], name, transition, collectionExpression, listeners, enterOperations, leaveOperations)
+    require(transitions != null && transitions.nonEmpty, "Transitions is empty")
+    require(transitions.size == 1, "Transitions should have exactly one member")
+    Props(classOf[SplitCollection], name, transitions.head, collectionExpression, listeners, enterOperations, leaveOperations)
   }
 }
 
 case class CollectionLaunch(collection: Seq[Object], transition: ActorRef)
 
-class SplitLaunch(mySender:ActorRef, parentPc:ProcessContext) extends Actor {
+class SplitLaunch(mySender: ActorRef, parentPc: ProcessContext) extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
   private var launched: Int = 0
 

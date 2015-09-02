@@ -31,7 +31,7 @@ with MockitoSugar {
   val simpleStates = List(startState, endState)
   val domainObject = new Object
 
-  "ProcessGuardian" when {
+  "Simple Condition Process" when {
     import DefinitionProtocol._
     import spray.json._
     val simpleDef = ProcessDefinition(simpleStates, "start", "desc", "simple")
