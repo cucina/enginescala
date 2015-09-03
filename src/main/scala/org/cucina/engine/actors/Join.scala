@@ -1,6 +1,6 @@
 package org.cucina.engine.actors
 
-import org.cucina.engine.{ExecuteFailed, ProcessContext}
+import org.cucina.engine.{ExecuteComplete, ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition._
 import org.slf4j.LoggerFactory
 
@@ -44,6 +44,8 @@ class Join(name: String,
     }
     pc.token.parent match {
       case Some(parent) =>
+        // TODO create Joiner mapped to the parent
+        // TODO make it persistent so the mapping could get restored
         val leaves = leaveStack :+ findTransition(transition.name)
         val joiner = context.actorOf(Props(classOf[Joiner], leaves))
         // execute enter ops appending a temp actor to handle next step below
@@ -75,18 +77,24 @@ object Join {
  */
 class Joiner(leaveStack: Seq[ActorRef] = Nil) extends Actor {
   private val LOG = LoggerFactory.getLogger(getClass)
+  // TODO collection of al children visited this
+  // TODO make it persistent so the mapping could get restored
 
   def receive = {
     case StackRequest(pc, callerstack) =>
       pc.token.parent match {
         case Some(parent) =>
+          pc.token.stateId = null
+          sender ! ExecuteComplete(pc)
           assert(parent.hasChildren, "Cannot process this as parent does not have children")
-          // kill this token
+          // TODO compare this list of children to the parent ones
+          // and remove all of them at once
           parent.children.remove(pc.token)
           // if it is the last one, execute leave ops on parent
           if (parent.children.isEmpty) {
             // take the only transition
-            leaveStack.head forward new StackRequest(pc, leaveStack.tail)
+            val ppc = new ProcessContext(parent, pc.parameters, pc.client)
+            leaveStack.head forward new StackRequest(ppc, leaveStack.tail)
           }
         case None =>
           LOG.warn("Attempted to execute join with a parentless context")
