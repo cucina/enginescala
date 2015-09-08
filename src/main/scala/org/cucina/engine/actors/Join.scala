@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 
 import akka.actor.{PoisonPill, ActorRef, Actor, Props}
 
+import scala.collection.mutable
+
 /**
  * This process element joins previously created flows back into a single stream.
  * Note that discards subflows upon successful entry, so if it desirable to save some states, for example dealing
@@ -37,17 +39,22 @@ class Join(name: String,
     this(name, transitions.head, listeners, enterOperations, leaveOperations)
   }
 
+  // a bit of a state
+  val joiners:mutable.HashMap[Token, ActorRef] = new mutable.HashMap[Token, ActorRef]
+
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     if (stack.nonEmpty) {
       LOG.warn("Join '" + name + "' should be a terminal actor in the stack, but the stack was " + stack)
       sender ! ExecuteFailed(pc.client, "Join '" + name + "' should be a terminal actor in the stack")
     }
+    LOG.info("Came to join:"+ pc.token)
     pc.token.parent match {
       case Some(parent) =>
-        // TODO create Joiner mapped to the parent
         // TODO make it persistent so the mapping could get restored
         val leaves = leaveStack :+ findTransition(transition.name)
-        val joiner = context.actorOf(Props(classOf[Joiner], leaves))
+        val joiner = joiners.getOrElse(parent, context.actorOf(Props(classOf[Joiner], leaves)))
+        // create Joiner mapped to the parent
+        joiners += (parent -> joiner)
         // execute enter ops appending a temp actor to handle next step below
         val mestack: Seq[ActorRef] = enterStack :+ joiner
         LOG.info("Stack=" + mestack)
@@ -95,11 +102,11 @@ class Joiner(leaveStack: Seq[ActorRef] = Nil) extends Actor {
             // take the only transition
             val ppc = new ProcessContext(parent, pc.parameters, pc.client)
             leaveStack.head forward new StackRequest(ppc, leaveStack.tail)
+            self ! PoisonPill
           }
         case None =>
-          LOG.warn("Attempted to execute join with a parentless context")
-          sender ! ExecuteFailed(pc.client, "Attempted to execute join with a parentless context")
+          LOG.warn("Attempted to execute joiner with a parentless context")
+          sender ! ExecuteFailed(pc.client, "Attempted to execute joiner with a parentless context")
       }
-      self ! PoisonPill
   }
 }

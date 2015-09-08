@@ -25,7 +25,7 @@ class CheckFalse(obj: Object) extends StackElementActor {
 class OutState extends Actor {
   def receive = {
     case StackRequest(pc, stack) =>
-      println("Called with " + pc)
+      println("OutState called with " + pc)
       pc.parameters += ("OutState" -> this.hashCode().toString)
       pc.client ! new ExecuteComplete(pc)
     case e@_ =>
@@ -51,10 +51,10 @@ class SucceedingTrans(name: String, output: String,
   extends Transition(name, output){
   override def receive = {
     case StackRequest(pc, callerstack) =>
-      println("Real request " + pc + " sender " + sender)
+      println("SucceedingTrans: request " + pc + " sender " + sender)
       sender forward ExecuteComplete(pc)
     case DryCheck(pc) =>
-      println("DryCheck " + pc)
+      println("SucceedingTrans: dryCheck " + pc)
       sender forward ExecuteComplete(pc)
   }
 }
