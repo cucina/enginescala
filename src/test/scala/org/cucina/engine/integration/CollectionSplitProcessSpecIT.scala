@@ -37,7 +37,7 @@ with MockitoSugar {
     val simpleDef = ProcessDefinition(simpleStates, "start", "desc", "simple")
 
     val json = simpleDef.toJson
-    val str = json.compactPrint
+    val str = json.prettyPrint
     println(str)
 
     "added and ran simple" should {

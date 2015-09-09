@@ -28,11 +28,11 @@ with MockitoSugar {
   val enterOperations: Seq[OperationDescriptor] = List(new Op1Desc)
   val transitions: Seq[TransitionDescriptor] = List()
 
-  "StateActor" when {
+  "State" when {
     "received EnterState" should {
       "return " in {
         within(500 millis) {
-          val actorRef = system.actorOf(State.props("state", transitions, null, enterOperations, null))
+          val actorRef = system.actorOf(State.props("state", transitions, enterOperations = enterOperations))
           actorRef ! new EnterState("one", processContext)
           expectMsgPF() {
             case ExecuteComplete(pc) =>

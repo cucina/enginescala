@@ -31,8 +31,9 @@ with MockitoSugar {
 
   "received StackRequest" should {
     "success for simple " in {
-      val actorRef = system.actorOf(SplitCollection.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName))::Nil,
-        statement, List(), List(), List()))
+      val actorRef = system.actorOf(SplitCollection.props("sc",
+        TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
+        List(), List(), List(), statement))
       val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 
@@ -46,8 +47,9 @@ with MockitoSugar {
       }
     }
     "fail for simple " in {
-      val actorRef = system.actorOf(SplitCollection.props("sc", TransitionDescriptor("str", "/user/state", className = Some(classOf[FailingTrans].getName))::Nil,
-        statement, List(), List(), List()))
+      val actorRef = system.actorOf(SplitCollection.props("sc",
+        TransitionDescriptor("str", "/user/state", className = Some(classOf[FailingTrans].getName)),
+        List(), List(), List(), statement))
       val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
         new mutable.HashMap[String, Object](), testActor)
 

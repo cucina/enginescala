@@ -45,14 +45,11 @@ class SplitCollection(name: String,
 }
 
 object SplitCollection {
-  def props(name: String, transitions: Seq[TransitionDescriptor],
-            collectionExpression: String,
+  def props(name: String, transition: TransitionDescriptor,
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
-            leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    require(transitions != null && transitions.nonEmpty, "Transitions is empty")
-    require(transitions.size == 1, "Transitions should have exactly one member")
-    Props(classOf[SplitCollection], name, transitions.head, collectionExpression, listeners, enterOperations, leaveOperations)
+            leaveOperations: Seq[OperationDescriptor] = List(), collectionExpression: String): Props = {
+    Props(classOf[SplitCollection], name, transition, listeners, enterOperations, leaveOperations, collectionExpression)
   }
 }
 
@@ -70,7 +67,7 @@ class SplitLaunch(mySender: ActorRef, parentPc: ProcessContext) extends Actor {
       LOG.info("Received " + ec)
       launched -= 1
       if (launched == 0) {
-        LOG.info("Last complete, notifying sender " + sender)
+        LOG.info("Last complete, notifying sender " + mySender)
         mySender ! ExecuteComplete(parentPc)
         self ! PoisonPill
       }
