@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import akka.actor.{ActorRef, Terminated, Actor, Props}
 
 /**
+ * Split execution using all available transitions to run subflows along each one in parallel
  * @author levinev
  */
 
@@ -20,7 +21,11 @@ class Split(name: String,
   extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
   private val LOG = LoggerFactory.getLogger(getClass)
 
-  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {}
+  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {
+    val launcher = context.actorOf(Props(classOf[SplitLauncher], sender, pc))
+    LOG.info("Create launcher=" + launcher)
+    launcher forward DivisionLaunch(pc.token.domainObject, transActors.values)
+  }
 }
 
 object Split {
@@ -28,6 +33,6 @@ object Split {
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[State], name, transitions, listeners, enterOperations, leaveOperations)
+    Props(classOf[Split], name, transitions, listeners, enterOperations, leaveOperations)
   }
 }

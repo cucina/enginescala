@@ -36,10 +36,11 @@ class SplitCollection(name: String,
       val coll = Ognl.getValue(collectionExpression, pc)
 
       assert(coll.isInstanceOf[Seq[Object]], "Result of expression '" + collectionExpression + "' should be a Seq but is " + coll)
-      val launcher = context.actorOf(Props(classOf[SplitLaunch], sender, pc))
+      val launcher = context.actorOf(Props(classOf[SplitLauncher], sender, pc))
       launcher forward CollectionLaunch(coll.asInstanceOf[Seq[Object]], findTransition(transition.name))
     } catch {
       case e: Throwable => LOG.error("Oops", e)
+//        pc.client ! ExecuteFailed()
     }
   }
 }
@@ -53,39 +54,3 @@ object SplitCollection {
   }
 }
 
-case class CollectionLaunch(collection: Seq[Object], transition: ActorRef)
-
-class SplitLaunch(mySender: ActorRef, parentPc: ProcessContext) extends Actor {
-  private val LOG = LoggerFactory.getLogger(getClass)
-  private var launched: Int = 0
-
-  def receive = {
-    case CollectionLaunch(coll, tr) =>
-      coll.foreach[Unit](o => createToken(o, tr))
-      LOG.info("Launched=" + launched)
-    case ec@ExecuteComplete(pc) =>
-      LOG.info("Received " + ec)
-      launched -= 1
-      if (launched == 0) {
-        LOG.info("Last complete, notifying sender " + mySender)
-        mySender ! ExecuteComplete(parentPc)
-        self ! PoisonPill
-      }
-
-    case ef@ExecuteFailed(c, f) =>
-      LOG.info("Received " + ef)
-      parentPc.token.children.empty
-      mySender ! ExecuteFailed(c, f)
-      self ! PoisonPill
-  }
-
-  private def createToken(o: Object, tr: ActorRef) = {
-    LOG.info("Creating token for " + o)
-    val t = Token(o, parentPc.token.processDefinition)
-    parentPc.token.children += t
-    t.parent = Some(parentPc.token)
-    val processContext = ProcessContext(t, parentPc.parameters, parentPc.client)
-    tr ! StackRequest(processContext, List())
-    launched += 1
-  }
-}
