@@ -5,7 +5,7 @@ import scala.collection.mutable.Set
 /**
  * @author levinev
  */
-case class Token(val domainObject: Object, val processDefinition: ProcessDefinition) {
+case class Token(domainObject: Object, processDefinition: ProcessDefinition, index: Int = -1) {
   require(domainObject != null, "DomainObject cannot be null")
   require(processDefinition != null, "ProcessDefinition cannot be null")
   var stateId: String = _

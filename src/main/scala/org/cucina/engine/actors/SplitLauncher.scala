@@ -20,10 +20,10 @@ class SplitLauncher(mySender: ActorRef, parentPc: ProcessContext) extends Actor 
 
   def receive = {
     case CollectionLaunch(coll, tr) =>
-      coll.foreach[Unit](o => createToken(o, tr))
+      coll.foreach[Unit](o => launchToken(o, tr))
       LOG.info("Launched=" + launched)
     case DivisionLaunch(obj, trs) =>
-      trs.foreach[Unit](tr => createToken(obj, tr))
+      trs.foreach[Unit](tr => launchToken(obj, tr))
       LOG.info("Launched=" + launched)
     case ec@ExecuteComplete(pc) =>
       LOG.info("Received " + ec)
@@ -36,14 +36,14 @@ class SplitLauncher(mySender: ActorRef, parentPc: ProcessContext) extends Actor 
 
     case ef@ExecuteFailed(c, f) =>
       LOG.info("Received " + ef)
-      parentPc.token.children.empty
+      parentPc.token.children.clear
       mySender ! ExecuteFailed(c, f)
       self ! PoisonPill
   }
 
-  private def createToken(o: Object, tr: ActorRef) = {
+  private def launchToken(o: Object, tr: ActorRef) = {
     LOG.info("Creating token for " + o)
-    val t = Token(o, parentPc.token.processDefinition)
+    val t = Token(o, parentPc.token.processDefinition, launched)
     parentPc.token.children += t
     t.parent = Some(parentPc.token)
     val processContext = ProcessContext(t, parentPc.parameters, parentPc.client)
