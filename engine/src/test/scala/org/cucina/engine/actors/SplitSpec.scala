@@ -26,13 +26,14 @@ with MockitoSugar {
 
   println(system.actorOf(Props[OutState], "state1"))
   println(system.actorOf(Props[OutState], "state2"))
+  println(system.actorOf(Props[OutState], "join"))
 
   "received StackRequest" should {
     val processContext: ProcessContext = new ProcessContext(new Token(new Object, mock[ProcessDefinition]),
       new mutable.HashMap[String, Object](), testActor)
 
     "success for simple " in {
-      val actorRef = system.actorOf(Split.props("sc",
+      val actorRef = system.actorOf(Split.props("sc", "join",
         TransitionDescriptor("str1", "/user/state1", className = Some(classOf[SucceedingTrans].getName)) ::
           TransitionDescriptor("str2", "/user/state2", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
@@ -46,7 +47,7 @@ with MockitoSugar {
       }
     }
     "fail for simple " in {
-      val actorRef = system.actorOf(Split.props("sc",
+      val actorRef = system.actorOf(Split.props("sc", "join",
         TransitionDescriptor("str1", "/user/state1", className = Some(classOf[SucceedingTrans].getName)) ::
           TransitionDescriptor("str2", "/user/state2", className = Some(classOf[FailingTrans].getName)) :: Nil,
         List(), List(), List()))

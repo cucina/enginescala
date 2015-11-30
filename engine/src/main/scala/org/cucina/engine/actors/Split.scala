@@ -6,30 +6,25 @@ import org.cucina.engine.definition.{OperationDescriptor, TransitionDescriptor}
 import org.slf4j.LoggerFactory
 
 /**
- * Split execution using all available transitions to run subflows along each one in parallel
- * @author levinev
- */
+  * Split execution using all available transitions to run subflows along each one in parallel
+  * @author levinev
+  */
 
-class Split(name: String,
+class Split(name: String, join: String,
             transitions: Seq[TransitionDescriptor],
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = Nil,
             leaveOperations: Seq[OperationDescriptor] = Nil)
-  extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
-  private val LOG = LoggerFactory.getLogger(getClass)
+  extends AbstractSplit(name, join, transitions, listeners, enterOperations, leaveOperations) {
 
-  def processStackRequest(pc:ProcessContext, stack: Seq[ActorRef]) = {
-    val launcher = context.actorOf(Props(classOf[SplitLauncher], sender, pc))
-    LOG.info("Create launcher=" + launcher)
-    launcher forward DivisionLaunch(pc.token.domainObject, transActors.values)
-  }
+  def splitter(pc: ProcessContext): Iterable[(Object, ActorRef, String)] = transActors.values.map { tr => (pc.token.domainObject, tr, tr.hashCode().toString) }
 }
 
 object Split {
-  def props(name: String, transitions: Seq[TransitionDescriptor],
+  def props(name: String, join: String, transitions: Seq[TransitionDescriptor],
             listeners: Seq[String] = List(),
             enterOperations: Seq[OperationDescriptor] = List(),
             leaveOperations: Seq[OperationDescriptor] = List()): Props = {
-    Props(classOf[Split], name, transitions, listeners, enterOperations, leaveOperations)
+    Props(classOf[Split], name, join, transitions, listeners, enterOperations, leaveOperations)
   }
 }

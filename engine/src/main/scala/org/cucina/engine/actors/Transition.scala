@@ -7,8 +7,8 @@ import org.cucina.engine.definition.{CheckDescriptor, OperationDescriptor}
 import org.slf4j.LoggerFactory
 
 /**
- * @author levinev
- */
+  * @author levinev
+  */
 case class DryCheck(pc: ProcessContext)
 
 class Transition(name: String, output: String,
@@ -48,8 +48,7 @@ class Transition(name: String, output: String,
       if (callerstack.nonEmpty) {
         LOG.warn("Transition '" + name + "' should be a terminal actor in the stack, but the stack was " + callerstack)
         sender ! ExecuteFailed(pc.client, "Transition '" + name + "' should be a terminal actor in the stack")
-      }
-      else {
+      } else {
         // build stack and execute it
         val stack: Seq[ActorRef] = staticstack :+ outputState
         LOG.info("Stack=" + stack)

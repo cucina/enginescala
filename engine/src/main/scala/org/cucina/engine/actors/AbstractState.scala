@@ -15,7 +15,7 @@ abstract class AbstractState(name: String,
                              enterOperations: Seq[OperationDescriptor] = Nil,
                              leaveOperations: Seq[OperationDescriptor] = Nil)
   extends Actor with ActorCreator {
-  private val LOG = LoggerFactory.getLogger(getClass)
+  protected val LOG = LoggerFactory.getLogger(getClass)
   lazy val enterOpActors: Seq[ActorRef] = {
     enterOperations.map(op => createActor(op))
   }

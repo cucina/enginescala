@@ -1,7 +1,7 @@
 package org.cucina.engine.actors
 
 import akka.actor.{Props, ActorSystem}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.testkit.{TestProbe, ImplicitSender, TestKit}
 import akka.util.Timeout
 import org.cucina.engine.{ExecuteFailed, ExecuteComplete, ProcessContext}
 import org.cucina.engine.definition.{TransitionDescriptor, ProcessDefinition, Token}
@@ -12,8 +12,8 @@ import scala.concurrent.duration.DurationInt
 import scala.collection.mutable
 
 /**
- * Created by vlevine on 8/27/15.
- */
+  * Created by vlevine on 8/27/15.
+  */
 class SplitCollectionSpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
@@ -26,12 +26,15 @@ with MockitoSugar {
   }
 
   println(system.actorOf(Props[OutState], "state"))
+  //println(system.actorOf(Props[OutState], "join"))
+  val join = TestProbe("join")
+  println(join.ref)
 
   val statement = "token().domainObject().coll()"
 
   "received StackRequest" should {
     "success for simple " in {
-      val actorRef = system.actorOf(SplitCollection.props("sc",
+      val actorRef = system.actorOf(SplitCollection.props("sc", "system/" + join.ref.path.name,
         TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)),
         List(), List(), List(), statement))
       val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
@@ -39,15 +42,34 @@ with MockitoSugar {
 
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(1 second) {
-        case ExecuteComplete(pc) =>
-          assert(pc.token.hasChildren)
-          assert(pc.token.children.size == 3)
-          val ch = pc.token.children.head
-          assert(ch.parent.get == pc.token)
+        case ec@ExecuteComplete(`processContext`) =>
+          print("aha:" + ec.processContext)
+        //          assert(processContext.token.hasChildren)
+        //          assert(processContext.token.children.size == 3)
+        //          val ch = processContext.token.children.head
+        //          assert(ch.parent.get == processContext.token)
       }
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="a")
+      }
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="b")
+      }
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="c")
+      }
+      assert(processContext.token.hasChildren)
+      println(processContext.token.children)
     }
+
     "fail for simple " in {
-      val actorRef = system.actorOf(SplitCollection.props("sc",
+      val actorRef = system.actorOf(SplitCollection.props("sc", "system/" + join.ref.path.name,
         TransitionDescriptor("str", "/user/state", className = Some(classOf[FailingTrans].getName)),
         List(), List(), List(), statement))
       val processContext: ProcessContext = new ProcessContext(new Token(ObjectWithSimpleCollection("a" :: "b" :: "c" :: Nil), mock[ProcessDefinition]),
@@ -55,10 +77,30 @@ with MockitoSugar {
 
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
-        case ExecuteFailed(c, f) =>
+        case ec@ExecuteComplete(`processContext`) =>
+          print("aha:" + ec.processContext)
+      }
+
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="a")
+      }
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="b")
+      }
+      join.expectMsgPF(1 second) {
+        case SplitToken(pc) =>
+          println(pc)
+          assert(pc.token.domainObject=="c")
+      }
+      /*case ExecuteFailed(c, f) =>
           println("client " + c)
           println("error " + f)
-      }
+      }*/
+
     }
   }
 }

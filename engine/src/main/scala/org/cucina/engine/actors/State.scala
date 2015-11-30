@@ -31,7 +31,7 @@ class State(name: String,
         transActors.get(tr) match {
           case Some(t) => enterStack.head forward new StackRequest(pc, enterStack.tail :+ t)
           case None =>
-            LOG.warn("Attempted to enter provding invalid exit transition name '" + tr + "'")
+            LOG.warn("Attempted to enter providing invalid exit transition name '" + tr + "'")
             sender ! ExecuteFailed(pc.client, "Attempted to enter providing invalid exit transition name '" + tr + "'")
         }
 

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
+case class SplitToken(pc:ProcessContext)
 /**
  * This process element joins previously created flows back into a single stream.
  * Note that discards subflows upon successful entry, so if it desirable to save some states, for example dealing
@@ -28,7 +29,6 @@ class Join(name: String,
            enterOperations: Seq[OperationDescriptor] = Nil,
            leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
-  private val LOG = LoggerFactory.getLogger(getClass)
 
   def this(name: String,
            transitions: Seq[TransitionDescriptor],
@@ -62,6 +62,10 @@ class Join(name: String,
         LOG.warn("Attempted to execute join with a parentless context")
         sender ! ExecuteFailed(pc.client, "Attempted to execute join with a parentless context")
     }
+  }
+
+  override def receiveLocal: Receive = {
+    case SplitToken(pc) =>
   }
 }
 
