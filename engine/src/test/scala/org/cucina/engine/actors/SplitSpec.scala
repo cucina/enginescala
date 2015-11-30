@@ -33,19 +33,11 @@ with MockitoSugar {
 
     "success for simple " in {
       val actorRef = system.actorOf(Split.props("sc",
-<<<<<<< HEAD:engine/src/test/scala/org/cucina/engine/actors/SplitSpec.scala
         TransitionDescriptor("str1", "/user/state1", className = Some(classOf[SucceedingTrans].getName)) ::
           TransitionDescriptor("str2", "/user/state2", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
       actorRef !new StackRequest(processContext, List())
       expectMsgPF(1 second) {
-=======
-        TransitionDescriptor("str1", "/user/state1", className = Some(classOf[SucceedingTrans].getName))::
-          TransitionDescriptor("str2", "/user/state2", className = Some(classOf[SucceedingTrans].getName))::Nil,
-        List(), List(), List()))
-      actorRef ! new StackRequest(processContext, List())
-      expectMsgPF(500 millis) {
->>>>>>> origin/master:src/test/scala/org/cucina/engine/actors/SplitSpec.scala
         case ExecuteComplete(pc) =>
           assert(pc.token.hasChildren)
           assert(pc.token.children.size == 2)
@@ -54,19 +46,11 @@ with MockitoSugar {
       }
     }
     "fail for simple " in {
-<<<<<<< HEAD:engine/src/test/scala/org/cucina/engine/actors/SplitSpec.scala
       val actorRef = system.actorOf(Split.props("sc",
         TransitionDescriptor("str1", "/user/state1", className = Some(classOf[SucceedingTrans].getName)) ::
           TransitionDescriptor("str2", "/user/state2", className = Some(classOf[FailingTrans].getName)) :: Nil,
         List(), List(), List()))
       actorRef !new StackRequest(processContext, List())
-=======
-      val actorRef = system.actorOf(Split.props("scf",
-        TransitionDescriptor("strf1", "/user/state1", className = Some(classOf[SucceedingTrans].getName))::
-          TransitionDescriptor("strf2", "/user/state2", className = Some(classOf[FailingTrans].getName))::Nil,
-        List(), List(), List()))
-      actorRef ! new StackRequest(processContext, List())
->>>>>>> origin/master:src/test/scala/org/cucina/engine/actors/SplitSpec.scala
       expectMsgPF(500 millis) {
         case ExecuteFailed(c, f) =>
           println("client " + c)

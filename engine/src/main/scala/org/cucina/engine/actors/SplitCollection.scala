@@ -41,11 +41,6 @@ class SplitCollection(name: String,
 //        pc.client ! ExecuteFailed()
     }
   }
-
-  override def receiveLocal: Receive = {
-    case a:ExecuteComplete =>
-      // find the only transition and do it
-  }
 }
 
 object SplitCollection {
