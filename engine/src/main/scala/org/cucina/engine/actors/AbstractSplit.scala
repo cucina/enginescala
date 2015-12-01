@@ -4,7 +4,6 @@ import akka.actor.ActorRef
 import org.cucina.engine.ProcessContext
 import org.cucina.engine.actors.support.ActorFinder
 import org.cucina.engine.definition.{OperationDescriptor, TransitionDescriptor, Token}
-import org.slf4j.LoggerFactory
 
 /**
   * Created by levinev on 30/11/2015.
@@ -16,6 +15,7 @@ abstract class AbstractSplit(name: String,
                              enterOperations: Seq[OperationDescriptor] = Nil,
                              leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) with ActorFinder {
+
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     val joinActor = findActor(join)
@@ -42,7 +42,7 @@ abstract class AbstractSplit(name: String,
     parentPc.token.children += t
     t.parent = Some(parentPc.token)
     val processContext = ProcessContext(t, parentPc.parameters, parentPc.client)
+    LOG.info("Transition " + tr)
     tr ! StackRequest(processContext, List())
-    joinActor ! SplitToken(processContext)
   }
 }
