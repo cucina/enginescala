@@ -31,6 +31,7 @@ with MockitoSugar {
       val actorRef = system.actorOf(Join.props("scA", TransitionDescriptor("strA", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("AA" :: Nil), mock[ProcessDefinition])
+      parent.stateId = "scA"
       val cha = new Token("AA", mock[ProcessDefinition])
       parent.children += cha
       cha.parent = Some(parent)
@@ -54,6 +55,7 @@ with MockitoSugar {
       val actorRef = system.actorOf(Join.props("join", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
+      parent.stateId = "scA"
 
       val chA = new Token("A", mock[ProcessDefinition])
       parent.children += chA

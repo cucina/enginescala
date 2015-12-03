@@ -19,7 +19,6 @@ class Decision(name: String,
                enterOperations: Seq[OperationDescriptor] = Nil,
                leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
-  private val LOG = LoggerFactory.getLogger(getClass)
 
   def processStackRequest(pc: ProcessContext, stack: Seq[ActorRef]) = {
     // iterate through transition until found one which will work and execute it

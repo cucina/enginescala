@@ -1,12 +1,26 @@
 package org.cucina.engine.actors
 
-import akka.actor.{PoisonPill, Props, Actor, ActorRef}
-import org.cucina.engine.{ExecuteComplete, ExecuteFailed, ProcessContext}
+import akka.actor.{Props, ActorRef}
+import org.cucina.engine.{ExecuteFailed, ProcessContext}
 import org.cucina.engine.definition._
-import akka.persistence._
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+
+case class Evt(token: Token, op: String)
+
+case class AddToken(token: Token)
+
+case class RemoveToken(token: Token)
+
+case class TokensInProcess(tokens: mutable.Set[Token] = mutable.Set[Token]()) {
+  def add(token: Token): TokensInProcess = copy(tokens += token)
+
+  def find(token: Token): Option[Token] = tokens.find(_ == token)
+
+  def size: Int = tokens.size
+
+  override def toString: String = tokens.toString
+}
 
 /**
   * This process element joins previously created flows back into a single stream.
@@ -30,6 +44,8 @@ class Join(name: String,
            leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transition :: Nil, listeners, enterOperations, leaveOperations) {
 
+  var parents = TokensInProcess()
+
   def this(name: String,
            transitions: Seq[TransitionDescriptor],
            listeners: Seq[String],
@@ -45,17 +61,25 @@ class Join(name: String,
     }
     LOG.info("Came to join:" + pc.token)
     val parent = pc.token.parent
+
     parent match {
       case None => LOG.warn("Execution came to join without parent:" + pc)
       case Some(pt) =>
-        if (pt.stateId != this.name) LOG.warn("Execution came to join '" + name + "' but parent is here '" + pt.stateId + "'")
-        else {
-          pt.children -= pc.token
-          // TODO how to sync state of parent between all children?
+        parents.find(pt) match {
+          case Some(t) =>
+            t.children -= pc.token
+            pc.token.parent = Some(t)
+          case None =>
+            LOG.warn("Token's parent is not in the list of already existing, adding " + pt)
+            parents.add(pt)
+        }
 
-          if (pt.children isEmpty)
+        val ptt = parent.get
+        if (ptt.stateId != this.name) LOG.warn("Execution came to join '" + name + "' but parent is here '" + ptt.stateId + "'")
+
+        if (ptt.children isEmpty) {
           // TODO inject join strategy
-            LOG.info("all tokens arrived")
+          LOG.info("all tokens arrived")
 
           // TODO make it persistent so the mapping could get restored
           val leaves = leaveStack :+ findTransition(transition.name)

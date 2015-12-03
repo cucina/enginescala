@@ -19,7 +19,6 @@ class State(name: String,
             enterOperations: Seq[OperationDescriptor] = Nil,
             leaveOperations: Seq[OperationDescriptor] = Nil)
   extends AbstractState(name, transitions, listeners, enterOperations, leaveOperations) {
-  private val LOG = LoggerFactory.getLogger(getClass)
 
   override def receiveLocal = {
     case EnterState(tr, pc) =>
