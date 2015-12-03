@@ -28,10 +28,10 @@ with MockitoSugar {
 
   "received StackRequest" should {
     "succeeded for single " in {
-      val actorRef = system.actorOf(Join.props("scA", TransitionDescriptor("strA", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
+      val actorRef = system.actorOf(Join.props("single", TransitionDescriptor("strA", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("AA" :: Nil), mock[ProcessDefinition])
-      parent.stateId = "scA"
+      parent.stateId = "single"
       val cha = new Token("AA", mock[ProcessDefinition])
       parent.children += cha
       cha.parent = Some(parent)
@@ -41,7 +41,7 @@ with MockitoSugar {
       actorRef ! new StackRequest(processContext, List())
       expectMsgPF(500 millis) {
         case ExecuteComplete(pc) =>
-          assert("AA" == pc.token.domainObject)
+          assert(ObjectWithSimpleCollection("AA" :: Nil) == pc.token.domainObject)
       }
 
       expectMsgPF(500 millis) {
@@ -52,10 +52,10 @@ with MockitoSugar {
       }
     }
     "succeeded for double " in {
-      val actorRef = system.actorOf(Join.props("join", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
+      val actorRef = system.actorOf(Join.props("double", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
         List(), List(), List()))
       val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
-      parent.stateId = "scA"
+      parent.stateId = "double"
 
       val chA = new Token("A", mock[ProcessDefinition])
       parent.children += chA

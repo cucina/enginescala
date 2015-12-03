@@ -67,7 +67,6 @@ class Join(name: String,
       case Some(pt) =>
         parents.find(pt) match {
           case Some(t) =>
-            t.children -= pc.token
             pc.token.parent = Some(t)
           case None =>
             LOG.warn("Token's parent is not in the list of already existing, adding " + pt)
@@ -75,6 +74,8 @@ class Join(name: String,
         }
 
         val ptt = parent.get
+        ptt.children -= pc.token
+
         if (ptt.stateId != this.name) LOG.warn("Execution came to join '" + name + "' but parent is here '" + ptt.stateId + "'")
 
         if (ptt.children isEmpty) {
