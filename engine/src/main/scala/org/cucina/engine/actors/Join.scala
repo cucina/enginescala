@@ -64,6 +64,7 @@ class Join(name: String,
 
     parent match {
       case None => LOG.warn("Execution came to join without parent:" + pc)
+        sender ! ExecuteFailed(pc.client, "Execution came to join without parent")
       case Some(pt) =>
         parents.find(pt) match {
           case Some(t) =>

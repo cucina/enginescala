@@ -11,8 +11,8 @@ import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
 
 /**
- * Created by vlevine on 8/27/15.
- */
+  * Created by vlevine on 8/27/15.
+  */
 class JoinSpec extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender
 with WordSpecLike
@@ -39,70 +39,51 @@ with MockitoSugar {
       val processContext: ProcessContext = new ProcessContext(cha, new mutable.HashMap[String, Object](), probe.ref)
 
       actorRef ! new StackRequest(processContext, List())
+
       expectMsgPF(500 millis) {
         case ExecuteComplete(pc) =>
           assert(ObjectWithSimpleCollection("AA" :: Nil) == pc.token.domainObject)
       }
-
-      expectMsgPF(500 millis) {
-        case ExecuteComplete(pc) =>
-          assert(pc.token.domainObject.isInstanceOf[ObjectWithSimpleCollection])
-          assert(!pc.token.hasChildren)
-          println(pc)
-      }
-    }
-    "succeeded for double " in {
-      val actorRef = system.actorOf(Join.props("double", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
-        List(), List(), List()))
-      val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
-      parent.stateId = "double"
-
-      val chA = new Token("A", mock[ProcessDefinition])
-      parent.children += chA
-      chA.parent = Some(parent)
-      val pcA: ProcessContext = new ProcessContext(chA, new mutable.HashMap[String, Object](), testActor)
-
-      val chB = new Token("B", mock[ProcessDefinition])
-      parent.children += chB
-      chB.parent = Some(parent)
-      val pcB: ProcessContext = new ProcessContext(chB, new mutable.HashMap[String, Object](), testActor)
-
-      actorRef ! new StackRequest(pcA, List())
-      expectMsgPF(500 millis) {
-        case ExecuteComplete(pc) =>
-          println("Received:" + pc)
-          assert("A" == pc.token.domainObject)
-      }
-
-      actorRef ! new StackRequest(pcB, List())
-      expectMsgPF(500 millis) {
-        case ExecuteComplete(pc) =>
-          println("Received:" + pc)
-          assert("B" == pc.token.domainObject)
-      }
-
-      expectMsgPF(500 millis) {
-        case ExecuteComplete(pc) =>
-          assert(pc.token.domainObject.isInstanceOf[ObjectWithSimpleCollection])
-          assert(!pc.token.hasChildren)
-        case a@_ =>
-          println("a=" + a)
-          fail
-      }
     }
 
-    "fail for parentless " in {
-      val actorRef = system.actorOf(Join.props("scx", TransitionDescriptor("strx", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
-        List(), List(), List()))
-      val processContext: ProcessContext = new ProcessContext(new Token("Ca", mock[ProcessDefinition]),
-        new mutable.HashMap[String, Object](), testActor)
+        "succeeded for double " in {
+          val actorRef = system.actorOf(Join.props("double", TransitionDescriptor("str", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
+            List(), List(), List()))
+          val parent = new Token(ObjectWithSimpleCollection("A" :: "B" :: Nil), mock[ProcessDefinition])
+          parent.stateId = "double"
 
-      actorRef ! new StackRequest(processContext, List())
-      expectMsgPF(500 millis) {
-        case ExecuteFailed(c, f) =>
-          println("client " + c)
-          println("error " + f)
-      }
-    }
+          val chA = new Token("A", mock[ProcessDefinition])
+          parent.children += chA
+          chA.parent = Some(parent)
+          val pcA: ProcessContext = new ProcessContext(chA, new mutable.HashMap[String, Object](), testActor)
+
+          val chB = new Token("B", mock[ProcessDefinition])
+          parent.children += chB
+          chB.parent = Some(parent)
+          val pcB: ProcessContext = new ProcessContext(chB, new mutable.HashMap[String, Object](), testActor)
+
+          actorRef ! new StackRequest(pcA, List())
+          actorRef ! new StackRequest(pcB, List())
+          expectMsgPF(500 millis) {
+            case ExecuteComplete(pc) =>
+              println("Received:" + pc)
+              assert(ObjectWithSimpleCollection("A" :: "B" :: Nil) == pc.token.domainObject)
+              assert(!pc.token.hasChildren)
+          }
+        }
+
+        "fail for parentless " in {
+          val actorRef = system.actorOf(Join.props("scx", TransitionDescriptor("strx", "/user/state", className = Some(classOf[SucceedingTrans].getName)) :: Nil,
+            List(), List(), List()))
+          val processContext: ProcessContext = new ProcessContext(new Token("Ca", mock[ProcessDefinition]),
+            new mutable.HashMap[String, Object](), testActor)
+
+          actorRef ! new StackRequest(processContext, List())
+          expectMsgPF(500 millis) {
+            case ExecuteFailed(c, f) =>
+              println("client " + c)
+              println("error " + f)
+          }
+        }
   }
 }
