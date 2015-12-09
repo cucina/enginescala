@@ -8,7 +8,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, Matchers, WordSpecLike}
 
 /**
- * Created by vlevine on 07/08/15.
+ * @author vlevine
  */
 class TwoStepProcessSpecIT extends TestKit(ActorSystem("cucina-test"))
 with ImplicitSender

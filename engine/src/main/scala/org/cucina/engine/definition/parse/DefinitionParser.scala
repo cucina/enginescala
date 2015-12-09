@@ -4,7 +4,7 @@ import org.cucina.engine.definition.{DefinitionProtocol, ProcessDefinition}
 import spray.json._
 
 /**
- * Created by vlevine on 04/08/15.
+ * @author vlevine
  */
 trait DefinitionParser {
   def parseDefinition(string: String): ProcessDefinition = {
