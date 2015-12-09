@@ -13,7 +13,6 @@ import spray.routing.{HttpService, Route}
   */
 trait Routes
   extends HttpService with DefaultJsonProtocol {
-  implicit val spFormat = jsonFormat4(StartProcess)
 
   lazy val allRoutes = startProcess ~ makeTransition ~ availableTransitions ~ addDefinition
 
