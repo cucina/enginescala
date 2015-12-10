@@ -1,10 +1,15 @@
 package org.cucina.engine.restful
 
 
-import org.cucina.engine.{AddDefinition, GetAvailableTransitions, MakeTransition, StartProcess}
-import spray.httpx.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol
+import org.cucina.engine.{AddDefinition}
 import spray.routing.{HttpService, Route}
+
+
+case class StartProcessJson(processDefinitionName: String, domainObject: String, transitionId: String = null, parameters: Option[Map[String, String]] = None)
+
+case class MakeTransitionJson(processDefinitionName: String, domainObject: String, transitionId: String, parameters: Option[Map[String, String]] = None)
+
+case class GetAvailableTransitionsJson(domainObject: String, processDefinitionName: String = null)
 
 /**
   * Binding business operations to the HTTP paths
@@ -12,7 +17,9 @@ import spray.routing.{HttpService, Route}
   * @author vlevine
   */
 trait Routes
-  extends HttpService with DefaultJsonProtocol {
+  extends HttpService {
+
+  import ProcessProtocol._
 
   lazy val allRoutes = startProcess ~ makeTransition ~ availableTransitions ~ addDefinition
 
@@ -20,33 +27,33 @@ trait Routes
     post {
       // authenticate()
       // authorize()
-      entity(as[StartProcess]) { body =>
+      entity(as[StartProcessJson]) { body =>
         startProcessOperation(body)
       }
     }
   }
 
-  def startProcessOperation(body: StartProcess): Route
+  def startProcessOperation(body: StartProcessJson): Route
 
   val makeTransition = path("workflow" / "transition") {
     post {
-      entity(as[MakeTransition]) { body =>
+      entity(as[MakeTransitionJson]) { body =>
         makeTransitionOperation(body)
       }
     }
   }
 
-  def makeTransitionOperation(body: MakeTransition): Route
+  def makeTransitionOperation(body: MakeTransitionJson): Route
 
   val availableTransitions = path("workflow" / "transitions") {
     get {
-      entity(as[GetAvailableTransitions]) { body =>
+      entity(as[GetAvailableTransitionsJson]) { body =>
         getTransitionsOperation(body)
       }
     }
   }
 
-  def getTransitionsOperation(body: GetAvailableTransitions): Route
+  def getTransitionsOperation(body: GetAvailableTransitionsJson): Route
 
   val addDefinition = path("workflow" / "definition") {
     post {
@@ -58,11 +65,5 @@ trait Routes
 
   def addDefinitionOperation(body: AddDefinition): Route
 
-}
 
-//object StartProcessProtocol extends DefaultJsonProtocol with SprayJsonSupport {
-//  implicit val spFormat = jsonFormat4(StartProcess)
-//  implicit val mtFormat = jsonFormat4(MakeTransition)
-//  implicit val gaFormat = jsonFormat2(GetAvailableTransitions)
-//  implicit val adFormat = jsonFormat1(AddDefinition)
-//}
+}

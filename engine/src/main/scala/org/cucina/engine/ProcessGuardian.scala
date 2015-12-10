@@ -3,7 +3,7 @@ package org.cucina.engine
 import akka.actor._
 import org.cucina.engine.actors._
 import org.cucina.engine.definition.parse.DefinitionParser
-import org.cucina.engine.definition.{TransitionDescriptor, StateDescriptor, ProcessDefinition, Token}
+import org.cucina.engine.definition.{ProcessDefinition, Token}
 import org.cucina.engine.repository.{StoreToken, MapTokenRepository}
 import org.slf4j.LoggerFactory
 
@@ -11,7 +11,7 @@ import scala.collection.immutable.HashMap
 
 
 /**
- * Created by levinev on 30/07/2015.
+ * @author vlevine
  */
 trait ClientContainer {
   val client: ActorRef

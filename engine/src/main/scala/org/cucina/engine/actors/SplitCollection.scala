@@ -31,7 +31,7 @@ class SplitCollection(name: String, join: String,
   def splitter(pc: ProcessContext): Iterable[(Object, ActorRef, String)] = {
     try {
       val coll = Ognl.getValue(collectionExpression, pc)
-      assert(coll.isInstanceOf[Seq[Object]], "Result of expression '" + collectionExpression + "' should be a Seq but is " + coll)
+      assert(coll.isInstanceOf[Seq[String]], "Result of expression '" + collectionExpression + "' should be a Seq but is " + coll)
       coll.asInstanceOf[Seq[Object]].map { obj => (obj, findTransition(transition.name), "") }
     } catch {
       case e: Throwable =>
