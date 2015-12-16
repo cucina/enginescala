@@ -105,7 +105,6 @@
         </dependency>
     </dependencies>
     <build>
-        <sourceDirectory>src/main/scala</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.scala-tools</groupId>
