@@ -1,6 +1,7 @@
 package org.cucina.engine.restful
 
 import org.cucina.engine._
+import spray.http.{StatusCodes, StatusCode}
 import spray.routing._
 import akka.pattern.ask
 import akka.util.Timeout
@@ -32,8 +33,18 @@ class WorkflowService extends HttpServiceActor with Routes {
   }
 
   def requestResponse(body: AnyRef): Route = {
+    import spray.json._
     implicit val timeout = Timeout(30 seconds)
     val future = ask(guardian, body)
-    complete(future)
+
+    future onSuccess {
+      case pf: ProcessFailure => complete(StatusCodes.ClientError, pf.cause)
+      case po@ _ => complete(po.toJson.compactPrint)
+    }
+
+    future onFailure {
+      case e@_ => complete(StatusCodes.ServerError, e.toJson.compactPrint)
+    }
+
   }
 }
